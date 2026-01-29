@@ -1,0 +1,17 @@
+# System
+Thumbs.db
+.DS_Store
+
+# Dependency
+node_modules
+
+# Build
+dist
+coverage
+
+# Docs
+docs/.vitepress/cache
+docs/.vitepress/dist
+
+# Development
+plans
