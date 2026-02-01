@@ -63,13 +63,15 @@ export const findCandidatesForItem = (
 // Low uniqueness:  guid > enclosure > link (if link-only) > title
 // Summary/content excluded: too volatile for cross-scan matching.
 // Returns null for ambiguous matches (>1) — prefer insert over wrong merge.
-export const selectMatch = (props: {
+export const selectMatch = ({
+  hashes,
+  candidates,
+  linkUniquenessRate,
+}: {
   hashes: ItemHashes
   candidates: Array<MatchableItem>
   linkUniquenessRate: number
 }): MatchResult | undefined => {
-  const { hashes, candidates, linkUniquenessRate } = props
-
   if (candidates.length === 0) {
     return
   }

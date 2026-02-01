@@ -13,41 +13,31 @@ describe('computeItemHashes', () => {
       content: 'Post content text',
       enclosures: [{ url: 'https://example.com/audio.mp3' }],
     }
+    const expected = {
+      guidHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+      linkHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+      enclosureHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+      titleHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+      contentHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+      summaryHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+    }
 
-    const result = computeItemHashes(value)
-
-    expect(result.guidHash).toMatch(/^[a-f0-9]{32}$/)
-    expect(result.linkHash).toMatch(/^[a-f0-9]{32}$/)
-    expect(result.enclosureHash).toMatch(/^[a-f0-9]{32}$/)
-    expect(result.titleHash).toMatch(/^[a-f0-9]{32}$/)
-    expect(result.summaryHash).toMatch(/^[a-f0-9]{32}$/)
-    expect(result.contentHash).toMatch(/^[a-f0-9]{32}$/)
+    expect(computeItemHashes(value)).toEqual(expected)
   })
 
   it('should compute only guidHash when only guid present', () => {
     const value: HashableItem = { guid: 'abc-123' }
+    const expected = {
+      guidHash: expect.stringMatching(/^[a-f0-9]{32}$/),
+    }
 
-    const result = computeItemHashes(value)
-
-    expect(result.guidHash).toMatch(/^[a-f0-9]{32}$/)
-    expect(result.linkHash).toBeUndefined()
-    expect(result.enclosureHash).toBeUndefined()
-    expect(result.titleHash).toBeUndefined()
-    expect(result.summaryHash).toBeUndefined()
-    expect(result.contentHash).toBeUndefined()
+    expect(computeItemHashes(value)).toEqual(expected)
   })
 
-  it('should return no hashes when no relevant fields present', () => {
+  it('should return empty object when no relevant fields present', () => {
     const value: HashableItem = {}
 
-    const result = computeItemHashes(value)
-
-    expect(result.guidHash).toBeUndefined()
-    expect(result.linkHash).toBeUndefined()
-    expect(result.enclosureHash).toBeUndefined()
-    expect(result.titleHash).toBeUndefined()
-    expect(result.summaryHash).toBeUndefined()
-    expect(result.contentHash).toBeUndefined()
+    expect(computeItemHashes(value)).toEqual({})
   })
 
   it('should use first enclosure URL when no isDefault', () => {
