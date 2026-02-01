@@ -10,7 +10,7 @@ import {
   normalizeLinkWithFragmentForHashing,
   normalizeTextForHashing,
 } from './hashes.js'
-import { type CollisionMap, emptyCollisions } from './meta.js'
+import { emptyCollisions } from './meta.js'
 import type { HashableItem } from './types.js'
 
 describe('normalizeLinkForHashing', () => {
