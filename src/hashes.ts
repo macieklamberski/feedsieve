@@ -34,11 +34,11 @@ export const buildIdentifierKey = (hashes: ItemHashes): string | undefined => {
   const parts = hashMeta
     .filter((meta) => meta.useAsIdentifier !== 'never')
     .map((meta) => {
-      const value =
-        meta.useAsIdentifier === 'onlyWhenNoStrong' && hasStrongHash(hashes)
-          ? ''
-          : (hashes[meta.key] ?? '')
-      return `${meta.tag}:${value}`
+      if (meta.useAsIdentifier === 'onlyWhenNoStrong' && hasStrongHash(hashes)) {
+        return `${meta.tag}:`
+      }
+
+      return `${meta.tag}:${hashes[meta.key] ?? ''}`
     })
 
   return parts.join('|')
