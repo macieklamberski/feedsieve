@@ -19,18 +19,18 @@ export {
 // differing only by fragment (e.g. #Earth2 vs #LimeVPN) get distinct
 // identities. Returns undefined when no hashes exist.
 export const buildIdentifierKey = (hashes: ItemHashes): string | undefined => {
-  const hasStrong = hashMeta.some((meta) => meta.strong && hashes[meta.key])
+  const hasStrongHash = hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
 
-  if (!hasStrong && !hashes.titleHash) {
+  if (!hasStrongHash && !hashes.titleHash) {
     return
   }
 
   // Output example: "g:g1|gf:|l:l1|lf:|e:|t:".
   const parts = hashMeta
-    .filter((meta) => meta.identifier !== 'never')
+    .filter((meta) => meta.useAsIdentifier !== 'never')
     .map((meta) => {
       const value =
-        meta.identifier === 'onlyWhenNoStrong' && hasStrong ? '' : (hashes[meta.key] ?? '')
+        meta.useAsIdentifier === 'onlyWhenNoStrong' && hasStrongHash ? '' : (hashes[meta.key] ?? '')
       return `${meta.tag}:${value}`
     })
 
@@ -145,7 +145,7 @@ export const computeItemHashes = <TItem extends HashableItem>(feedItem: TItem): 
   const hashes: ItemHashes = {}
 
   for (const meta of hashMeta) {
-    const normalized = meta.normalize(feedItem)
+    const normalized = meta.normalizeFn(feedItem)
 
     if (normalized) {
       hashes[meta.key] = generateChecksum128(normalized)

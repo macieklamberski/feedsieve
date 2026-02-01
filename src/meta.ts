@@ -20,9 +20,9 @@ export type HashMeta = {
   key: HashKey
   tag: string
   weight: number
-  strong: boolean
-  identifier: IdentifierRule
-  normalize: (item: HashableItem) => string | undefined
+  isStrongHash: boolean
+  useAsIdentifier: IdentifierRule
+  normalizeFn: (item: HashableItem) => string | undefined
 }
 
 // Single source of truth for hash key metadata.
@@ -32,65 +32,65 @@ export const hashMeta: Array<HashMeta> = [
     key: 'guidHash',
     tag: 'g',
     weight: 32,
-    strong: true,
-    identifier: 'always',
-    normalize: (item) => normalizeGuidForHashing(item.guid),
+    isStrongHash: true,
+    useAsIdentifier: 'always',
+    normalizeFn: (item) => normalizeGuidForHashing(item.guid),
   },
   {
     key: 'guidFragmentHash',
     tag: 'gf',
     weight: 0,
-    strong: false,
-    identifier: 'always',
-    normalize: (item) => normalizeGuidFragmentForHashing(item.guid),
+    isStrongHash: false,
+    useAsIdentifier: 'always',
+    normalizeFn: (item) => normalizeGuidFragmentForHashing(item.guid),
   },
   {
     key: 'linkHash',
     tag: 'l',
     weight: 8,
-    strong: true,
-    identifier: 'always',
-    normalize: (item) => normalizeLinkForHashing(item.link),
+    isStrongHash: true,
+    useAsIdentifier: 'always',
+    normalizeFn: (item) => normalizeLinkForHashing(item.link),
   },
   {
     key: 'linkFragmentHash',
     tag: 'lf',
     weight: 0,
-    strong: false,
-    identifier: 'always',
-    normalize: (item) => normalizeLinkFragmentForHashing(item.link),
+    isStrongHash: false,
+    useAsIdentifier: 'always',
+    normalizeFn: (item) => normalizeLinkFragmentForHashing(item.link),
   },
   {
     key: 'enclosureHash',
     tag: 'e',
     weight: 16,
-    strong: true,
-    identifier: 'always',
-    normalize: (item) => normalizeEnclosureForHashing(item.enclosures),
+    isStrongHash: true,
+    useAsIdentifier: 'always',
+    normalizeFn: (item) => normalizeEnclosureForHashing(item.enclosures),
   },
   {
     key: 'titleHash',
     tag: 't',
     weight: 4,
-    strong: false,
-    identifier: 'onlyWhenNoStrong',
-    normalize: (item) => normalizeTextForHashing(item.title),
+    isStrongHash: false,
+    useAsIdentifier: 'onlyWhenNoStrong',
+    normalizeFn: (item) => normalizeTextForHashing(item.title),
   },
   {
     key: 'contentHash',
     tag: 'c',
     weight: 2,
-    strong: false,
-    identifier: 'never',
-    normalize: (item) => normalizeHtmlForHashing(item.content),
+    isStrongHash: false,
+    useAsIdentifier: 'never',
+    normalizeFn: (item) => normalizeHtmlForHashing(item.content),
   },
   {
     key: 'summaryHash',
     tag: 's',
     weight: 1,
-    strong: false,
-    identifier: 'never',
-    normalize: (item) => normalizeHtmlForHashing(item.summary),
+    isStrongHash: false,
+    useAsIdentifier: 'never',
+    normalizeFn: (item) => normalizeHtmlForHashing(item.summary),
   },
 ]
 
