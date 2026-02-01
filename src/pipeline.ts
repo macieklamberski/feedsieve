@@ -1,6 +1,6 @@
 import { buildBatchDedupKey, buildIdentifierKey, computeItemHashes } from './hashes.js'
+import { type CollisionMap, hashKeys, hashMeta } from './meta.js'
 import type {
-  CollisionProfile,
   HashableItem,
   HashedFeedItem,
   IdentifiedFeedItem,
@@ -8,24 +8,12 @@ import type {
   KeyedFeedItem,
 } from './types.js'
 
-// Hash weight for best-copy-wins scoring. Higher = stronger signal.
-const hashWeights: Record<keyof ItemHashes, number> = {
-  guidHash: 32,
-  guidFragmentHash: 0,
-  enclosureHash: 16,
-  linkHash: 8,
-  linkFragmentHash: 0,
-  titleHash: 4,
-  contentHash: 2,
-  summaryHash: 1,
-}
-
 // Score an item by how many hash slots are populated, weighted by signal strength.
 export const scoreItem = (hashes: ItemHashes): number => {
   let score = 0
 
-  for (const [key, weight] of Object.entries(hashWeights)) {
-    if (hashes[key as keyof ItemHashes]) {
+  for (const { key, weight } of hashMeta) {
+    if (hashes[key]) {
       score += weight
     }
   }
@@ -42,32 +30,19 @@ export const computeAllHashes = <TItem extends HashableItem>(
   })
 }
 
-type CollisionField = [keyof ItemHashes, keyof CollisionProfile]
-
-const collisionFields: Array<CollisionField> = [
-  ['guidHash', 'collidingGuids'],
-  ['guidFragmentHash', 'collidingGuidFragments'],
-  ['linkHash', 'collidingLinks'],
-  ['linkFragmentHash', 'collidingLinkFragments'],
-  ['enclosureHash', 'collidingEnclosures'],
-  ['titleHash', 'collidingTitles'],
-  ['contentHash', 'collidingContents'],
-  ['summaryHash', 'collidingSummaries'],
-]
-
 // Step 2: Find hashes appearing >1 time per field.
-export const detectCollisions = <TItem>(items: Array<HashedFeedItem<TItem>>): CollisionProfile => {
-  const seen = {} as CollisionProfile
-  const duplicates = {} as CollisionProfile
+export const detectCollisions = <TItem>(items: Array<HashedFeedItem<TItem>>): CollisionMap => {
+  const seen = {} as CollisionMap
+  const duplicates = {} as CollisionMap
 
-  for (const [, key] of collisionFields) {
+  for (const key of hashKeys) {
     seen[key] = new Set()
     duplicates[key] = new Set()
   }
 
   for (const { hashes } of items) {
-    for (const [field, key] of collisionFields) {
-      const value = hashes[field]
+    for (const key of hashKeys) {
+      const value = hashes[key]
 
       if (!value) {
         continue
@@ -90,7 +65,7 @@ export const detectCollisions = <TItem>(items: Array<HashedFeedItem<TItem>>): Co
 // Step 3: Compute identifierKey and batchDedupKey for each item.
 export const buildAllKeys = <TItem>(
   items: Array<HashedFeedItem<TItem>>,
-  collisions: CollisionProfile,
+  collisions: CollisionMap,
 ): Array<KeyedFeedItem<TItem>> => {
   return items.map((item) => ({
     ...item,

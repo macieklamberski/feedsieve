@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { computeItemHashes } from './hashes.js'
+import { type CollisionMap, emptyCollisions } from './meta.js'
 import {
   buildAllKeys,
   computeAllHashes,
@@ -9,24 +10,12 @@ import {
   scoreItem,
 } from './pipeline.js'
 import type {
-  CollisionProfile,
   HashableItem,
   HashedFeedItem,
   IdentifiedFeedItem,
   ItemHashes,
   KeyedFeedItem,
 } from './types.js'
-
-const emptyCollisions: CollisionProfile = {
-  collidingGuids: new Set(),
-  collidingGuidFragments: new Set(),
-  collidingLinks: new Set(),
-  collidingLinkFragments: new Set(),
-  collidingEnclosures: new Set(),
-  collidingTitles: new Set(),
-  collidingContents: new Set(),
-  collidingSummaries: new Set(),
-}
 
 describe('scoreItem', () => {
   it('should sum weights for multiple hashes', () => {
@@ -112,15 +101,15 @@ describe('detectCollisions', () => {
         },
       },
     ]
-    const expected: CollisionProfile = {
-      collidingGuids: new Set(['g1']),
-      collidingGuidFragments: new Set(['gf1']),
-      collidingLinks: new Set(['l1']),
-      collidingLinkFragments: new Set(['lf1']),
-      collidingEnclosures: new Set(['e1']),
-      collidingTitles: new Set(['t1']),
-      collidingContents: new Set(['c1']),
-      collidingSummaries: new Set(['s1']),
+    const expected: CollisionMap = {
+      guidHash: new Set(['g1']),
+      guidFragmentHash: new Set(['gf1']),
+      linkHash: new Set(['l1']),
+      linkFragmentHash: new Set(['lf1']),
+      enclosureHash: new Set(['e1']),
+      titleHash: new Set(['t1']),
+      contentHash: new Set(['c1']),
+      summaryHash: new Set(['s1']),
     }
 
     expect(detectCollisions(value)).toEqual(expected)
@@ -141,9 +130,9 @@ describe('detectCollisions', () => {
       { feedItem: {}, hashes: { guidHash: 'g1' } },
       { feedItem: {}, hashes: { guidHash: 'g2' } },
     ]
-    const expected: CollisionProfile = {
+    const expected: CollisionMap = {
       ...emptyCollisions,
-      collidingGuids: new Set(['g1']),
+      guidHash: new Set(['g1']),
     }
 
     expect(detectCollisions(value)).toEqual(expected)

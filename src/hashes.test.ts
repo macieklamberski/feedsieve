@@ -10,18 +10,8 @@ import {
   normalizeLinkWithFragmentForHashing,
   normalizeTextForHashing,
 } from './hashes.js'
-import type { CollisionProfile, HashableItem } from './types.js'
-
-const emptyCollisions: CollisionProfile = {
-  collidingGuids: new Set(),
-  collidingGuidFragments: new Set(),
-  collidingLinks: new Set(),
-  collidingLinkFragments: new Set(),
-  collidingEnclosures: new Set(),
-  collidingTitles: new Set(),
-  collidingContents: new Set(),
-  collidingSummaries: new Set(),
-}
+import { type CollisionMap, emptyCollisions } from './meta.js'
+import type { HashableItem } from './types.js'
 
 describe('normalizeLinkForHashing', () => {
   it('should strip protocol from link', () => {
@@ -603,7 +593,7 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should split guid with guid fragment when guid collides and guid fragment is safe', () => {
-    const collisions = { ...emptyCollisions, collidingGuids: new Set(['g1']) }
+    const collisions = { ...emptyCollisions, guidHash: new Set(['g1']) }
     const value = { guidHash: 'g1', guidFragmentHash: 'gf1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBe('g:g1|gf:gf1')
@@ -612,8 +602,8 @@ describe('buildBatchDedupKey', () => {
   it('should split guid with enclosure when guid and guid fragment collide', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingGuids: new Set(['g1']),
-      collidingGuidFragments: new Set(['gf1']),
+      guidHash: new Set(['g1']),
+      guidFragmentHash: new Set(['gf1']),
     }
     const value = { guidHash: 'g1', guidFragmentHash: 'gf1', enclosureHash: 'e1' }
 
@@ -621,7 +611,7 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should split guid with enclosure when guid collides and enclosure is safe', () => {
-    const collisions = { ...emptyCollisions, collidingGuids: new Set(['g1']) }
+    const collisions = { ...emptyCollisions, guidHash: new Set(['g1']) }
     const value = { guidHash: 'g1', enclosureHash: 'e1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBe('g:g1|e:e1')
@@ -630,8 +620,8 @@ describe('buildBatchDedupKey', () => {
   it('should split guid with link when guid and enclosure collide but link is safe', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingGuids: new Set(['g1']),
-      collidingEnclosures: new Set(['e1']),
+      guidHash: new Set(['g1']),
+      enclosureHash: new Set(['e1']),
     }
     const value = { guidHash: 'g1', enclosureHash: 'e1', linkHash: 'l1' }
 
@@ -641,9 +631,9 @@ describe('buildBatchDedupKey', () => {
   it('should split guid with link fragment when guid, enclosure, and link all collide but link fragment is safe', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingGuids: new Set(['g1']),
-      collidingEnclosures: new Set(['e1']),
-      collidingLinks: new Set(['l1']),
+      guidHash: new Set(['g1']),
+      enclosureHash: new Set(['e1']),
+      linkHash: new Set(['l1']),
     }
     const value = {
       guidHash: 'g1',
@@ -658,10 +648,10 @@ describe('buildBatchDedupKey', () => {
   it('should split guid with title when guid, enclosure, link, and link fragment all collide', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingGuids: new Set(['g1']),
-      collidingEnclosures: new Set(['e1']),
-      collidingLinks: new Set(['l1']),
-      collidingLinkFragments: new Set(['lf1']),
+      guidHash: new Set(['g1']),
+      enclosureHash: new Set(['e1']),
+      linkHash: new Set(['l1']),
+      linkFragmentHash: new Set(['lf1']),
     }
     const value = {
       guidHash: 'g1',
@@ -677,10 +667,10 @@ describe('buildBatchDedupKey', () => {
   it('should return undefined when guid collides and all splitters are unsafe', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingGuids: new Set(['g1']),
-      collidingEnclosures: new Set(['e1']),
-      collidingLinks: new Set(['l1']),
-      collidingTitles: new Set(['t1']),
+      guidHash: new Set(['g1']),
+      enclosureHash: new Set(['e1']),
+      linkHash: new Set(['l1']),
+      titleHash: new Set(['t1']),
     }
     const value = { guidHash: 'g1', enclosureHash: 'e1', linkHash: 'l1', titleHash: 't1' }
 
@@ -688,7 +678,7 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should return undefined when guid collides and no splitter hashes exist', () => {
-    const collisions = { ...emptyCollisions, collidingGuids: new Set(['g1']) }
+    const collisions = { ...emptyCollisions, guidHash: new Set(['g1']) }
     const value = { guidHash: 'g1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBeUndefined()
@@ -701,14 +691,14 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should split link with fragment when link collides and fragment is safe', () => {
-    const collisions = { ...emptyCollisions, collidingLinks: new Set(['l1']) }
+    const collisions = { ...emptyCollisions, linkHash: new Set(['l1']) }
     const value = { linkHash: 'l1', linkFragmentHash: 'lf1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBe('l:l1|lf:lf1')
   })
 
   it('should prefer fragment over enclosure as link splitter', () => {
-    const collisions = { ...emptyCollisions, collidingLinks: new Set(['l1']) }
+    const collisions = { ...emptyCollisions, linkHash: new Set(['l1']) }
     const value = { linkHash: 'l1', linkFragmentHash: 'lf1', enclosureHash: 'e1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBe('l:l1|lf:lf1')
@@ -717,8 +707,8 @@ describe('buildBatchDedupKey', () => {
   it('should fall back to enclosure when link and fragment both collide', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingLinks: new Set(['l1']),
-      collidingLinkFragments: new Set(['lf1']),
+      linkHash: new Set(['l1']),
+      linkFragmentHash: new Set(['lf1']),
     }
     const value = { linkHash: 'l1', linkFragmentHash: 'lf1', enclosureHash: 'e1' }
 
@@ -726,7 +716,7 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should split link with enclosure when link collides and enclosure is safe', () => {
-    const collisions = { ...emptyCollisions, collidingLinks: new Set(['l1']) }
+    const collisions = { ...emptyCollisions, linkHash: new Set(['l1']) }
     const value = { linkHash: 'l1', enclosureHash: 'e1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBe('l:l1|e:e1')
@@ -735,8 +725,8 @@ describe('buildBatchDedupKey', () => {
   it('should split link with title when link and enclosure collide but title is safe', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingLinks: new Set(['l1']),
-      collidingEnclosures: new Set(['e1']),
+      linkHash: new Set(['l1']),
+      enclosureHash: new Set(['e1']),
     }
     const value = { linkHash: 'l1', enclosureHash: 'e1', titleHash: 't1' }
 
@@ -746,9 +736,9 @@ describe('buildBatchDedupKey', () => {
   it('should return undefined when link collides and all splitters are unsafe', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingLinks: new Set(['l1']),
-      collidingEnclosures: new Set(['e1']),
-      collidingTitles: new Set(['t1']),
+      linkHash: new Set(['l1']),
+      enclosureHash: new Set(['e1']),
+      titleHash: new Set(['t1']),
     }
     const value = { linkHash: 'l1', enclosureHash: 'e1', titleHash: 't1' }
 
@@ -762,7 +752,7 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should return undefined when enclosure-only and colliding', () => {
-    const collisions = { ...emptyCollisions, collidingEnclosures: new Set(['e1']) }
+    const collisions = { ...emptyCollisions, enclosureHash: new Set(['e1']) }
     const value = { enclosureHash: 'e1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBeUndefined()
@@ -775,7 +765,7 @@ describe('buildBatchDedupKey', () => {
   })
 
   it('should split title with content when title collides and content is safe', () => {
-    const collisions = { ...emptyCollisions, collidingTitles: new Set(['t1']) }
+    const collisions = { ...emptyCollisions, titleHash: new Set(['t1']) }
     const value = { titleHash: 't1', contentHash: 'c1' }
 
     expect(buildBatchDedupKey(value, collisions)).toBe('t:t1|c:c1')
@@ -784,8 +774,8 @@ describe('buildBatchDedupKey', () => {
   it('should split title with summary when title and content collide but summary is safe', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingTitles: new Set(['t1']),
-      collidingContents: new Set(['c1']),
+      titleHash: new Set(['t1']),
+      contentHash: new Set(['c1']),
     }
     const value = { titleHash: 't1', contentHash: 'c1', summaryHash: 's1' }
 
@@ -795,9 +785,9 @@ describe('buildBatchDedupKey', () => {
   it('should return undefined when title collides and no safe splitter exists', () => {
     const collisions = {
       ...emptyCollisions,
-      collidingTitles: new Set(['t1']),
-      collidingContents: new Set(['c1']),
-      collidingSummaries: new Set(['s1']),
+      titleHash: new Set(['t1']),
+      contentHash: new Set(['c1']),
+      summaryHash: new Set(['s1']),
     }
     const value = { titleHash: 't1', contentHash: 'c1', summaryHash: 's1' }
 

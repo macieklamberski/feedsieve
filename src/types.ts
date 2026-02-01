@@ -31,17 +31,6 @@ export type MatchableItem = {
   contentHash: string | null
 }
 
-export type CollisionProfile = {
-  collidingGuids: Set<string>
-  collidingGuidFragments: Set<string>
-  collidingLinks: Set<string>
-  collidingLinkFragments: Set<string>
-  collidingEnclosures: Set<string>
-  collidingTitles: Set<string>
-  collidingContents: Set<string>
-  collidingSummaries: Set<string>
-}
-
 export type HashedFeedItem<TItem> = {
   feedItem: TItem
   hashes: ItemHashes

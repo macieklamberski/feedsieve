@@ -1,6 +1,7 @@
 import { defaultStrippedParams, type NormalizeOptions, normalizeUrl } from 'feedcanon'
 import { generateChecksum128 } from './helpers.js'
-import type { CollisionProfile, HashableItem, ItemHashes } from './types.js'
+import { type CollisionMap, emptyCollisions, hashMeta } from './meta.js'
+import type { HashableItem, ItemHashes } from './types.js'
 
 const normalizeOptions: NormalizeOptions = {
   stripProtocol: true,
@@ -137,31 +138,22 @@ export const normalizeHtmlForHashing = (html: string | undefined): string | unde
 // differing only by fragment (e.g. #Earth2 vs #LimeVPN) get distinct
 // identities. Returns undefined when no hashes exist.
 export const buildIdentifierKey = (hashes: ItemHashes): string | undefined => {
-  const hasStrongHash = hashes.guidHash || hashes.linkHash || hashes.enclosureHash
+  const hasStrong = hashMeta.some((meta) => meta.strong && hashes[meta.key])
 
-  if (!hasStrongHash && !hashes.titleHash) {
+  if (!hasStrong && !hashes.titleHash) {
     return
   }
 
-  return [
-    `g:${hashes.guidHash ?? ''}`,
-    `gf:${hashes.guidFragmentHash ?? ''}`,
-    `l:${hashes.linkHash ?? ''}`,
-    `lf:${hashes.linkFragmentHash ?? ''}`,
-    `e:${hashes.enclosureHash ?? ''}`,
-    `t:${hasStrongHash ? '' : (hashes.titleHash ?? '')}`,
-  ].join('|')
-}
+  // Output example: "g:g1|gf:|l:l1|lf:|e:|t:".
+  const parts = hashMeta
+    .filter((meta) => meta.identifier !== 'never')
+    .map((meta) => {
+      const value =
+        meta.identifier === 'onlyWhenNoStrong' && hasStrong ? '' : (hashes[meta.key] ?? '')
+      return `${meta.tag}:${value}`
+    })
 
-const emptyCollisions: CollisionProfile = {
-  collidingGuids: new Set(),
-  collidingGuidFragments: new Set(),
-  collidingLinks: new Set(),
-  collidingLinkFragments: new Set(),
-  collidingEnclosures: new Set(),
-  collidingTitles: new Set(),
-  collidingContents: new Set(),
-  collidingSummaries: new Set(),
+  return parts.join('|')
 }
 
 // Check if a hash is present and not colliding (safe to use as splitter).
@@ -175,31 +167,31 @@ const isSafeSplitter = (hash: string | undefined, collidingSet: Set<string>): bo
 // Returns undefined when no safe key can be built — item falls back to identifierKey in dedup.
 export const buildBatchDedupKey = (
   hashes: ItemHashes,
-  collisions: CollisionProfile = emptyCollisions,
+  collisions: CollisionMap = emptyCollisions,
 ): string | undefined => {
   // GUID path: strongest signal.
   if (hashes.guidHash) {
-    if (!collisions.collidingGuids.has(hashes.guidHash)) {
+    if (!collisions.guidHash.has(hashes.guidHash)) {
       return `g:${hashes.guidHash}`
     }
 
-    if (isSafeSplitter(hashes.guidFragmentHash, collisions.collidingGuidFragments)) {
+    if (isSafeSplitter(hashes.guidFragmentHash, collisions.guidFragmentHash)) {
       return `g:${hashes.guidHash}|gf:${hashes.guidFragmentHash}`
     }
 
-    if (isSafeSplitter(hashes.enclosureHash, collisions.collidingEnclosures)) {
+    if (isSafeSplitter(hashes.enclosureHash, collisions.enclosureHash)) {
       return `g:${hashes.guidHash}|e:${hashes.enclosureHash}`
     }
 
-    if (isSafeSplitter(hashes.linkHash, collisions.collidingLinks)) {
+    if (isSafeSplitter(hashes.linkHash, collisions.linkHash)) {
       return `g:${hashes.guidHash}|l:${hashes.linkHash}`
     }
 
-    if (isSafeSplitter(hashes.linkFragmentHash, collisions.collidingLinkFragments)) {
+    if (isSafeSplitter(hashes.linkFragmentHash, collisions.linkFragmentHash)) {
       return `g:${hashes.guidHash}|lf:${hashes.linkFragmentHash}`
     }
 
-    if (isSafeSplitter(hashes.titleHash, collisions.collidingTitles)) {
+    if (isSafeSplitter(hashes.titleHash, collisions.titleHash)) {
       return `g:${hashes.guidHash}|t:${hashes.titleHash}`
     }
 
@@ -208,19 +200,19 @@ export const buildBatchDedupKey = (
 
   // Link path.
   if (hashes.linkHash) {
-    if (!collisions.collidingLinks.has(hashes.linkHash)) {
+    if (!collisions.linkHash.has(hashes.linkHash)) {
       return `l:${hashes.linkHash}`
     }
 
-    if (isSafeSplitter(hashes.linkFragmentHash, collisions.collidingLinkFragments)) {
+    if (isSafeSplitter(hashes.linkFragmentHash, collisions.linkFragmentHash)) {
       return `l:${hashes.linkHash}|lf:${hashes.linkFragmentHash}`
     }
 
-    if (isSafeSplitter(hashes.enclosureHash, collisions.collidingEnclosures)) {
+    if (isSafeSplitter(hashes.enclosureHash, collisions.enclosureHash)) {
       return `l:${hashes.linkHash}|e:${hashes.enclosureHash}`
     }
 
-    if (isSafeSplitter(hashes.titleHash, collisions.collidingTitles)) {
+    if (isSafeSplitter(hashes.titleHash, collisions.titleHash)) {
       return `l:${hashes.linkHash}|t:${hashes.titleHash}`
     }
 
@@ -229,7 +221,7 @@ export const buildBatchDedupKey = (
 
   // Enclosure-only path (no guid, no link).
   if (hashes.enclosureHash) {
-    if (!collisions.collidingEnclosures.has(hashes.enclosureHash)) {
+    if (!collisions.enclosureHash.has(hashes.enclosureHash)) {
       return `e:${hashes.enclosureHash}`
     }
 
@@ -238,15 +230,15 @@ export const buildBatchDedupKey = (
 
   // Title path (no strong IDs).
   if (hashes.titleHash) {
-    if (!collisions.collidingTitles.has(hashes.titleHash)) {
+    if (!collisions.titleHash.has(hashes.titleHash)) {
       return `t:${hashes.titleHash}`
     }
 
-    if (isSafeSplitter(hashes.contentHash, collisions.collidingContents)) {
+    if (isSafeSplitter(hashes.contentHash, collisions.contentHash)) {
       return `t:${hashes.titleHash}|c:${hashes.contentHash}`
     }
 
-    if (isSafeSplitter(hashes.summaryHash, collisions.collidingSummaries)) {
+    if (isSafeSplitter(hashes.summaryHash, collisions.summaryHash)) {
       return `t:${hashes.titleHash}|s:${hashes.summaryHash}`
     }
 
