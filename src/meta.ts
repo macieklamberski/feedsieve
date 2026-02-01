@@ -113,8 +113,9 @@ export const hashMeta: Array<HashMeta> = [
 ]
 
 // Check if any strong hash (guid/link/enclosure) is present.
-export const hasStrongHash = (hashes: ItemHashes): boolean =>
-  hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
+export const hasStrongHash = (hashes: ItemHashes): boolean => {
+  return hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
+}
 
 // All hash keys derived from hashMeta.
 export const hashKeys: Array<HashKey> = hashMeta.map((meta) => meta.key)

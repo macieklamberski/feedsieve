@@ -89,12 +89,12 @@ export const selectMatch = (props: {
     // Multiple GUID matches — try narrowing by enclosure, guid fragment, link.
     if (byGuid.length > 1) {
       if (hashes.enclosureHash) {
-        const byEnc = byGuid.filter((candidate) => {
+        const byEnclosure = byGuid.filter((candidate) => {
           return candidate.enclosureHash === hashes.enclosureHash
         })
 
-        if (byEnc.length === 1) {
-          return { match: byEnc[0], identifierSource: 'guid' }
+        if (byEnclosure.length === 1) {
+          return { match: byEnclosure[0], identifierSource: 'guid' }
         }
       }
 

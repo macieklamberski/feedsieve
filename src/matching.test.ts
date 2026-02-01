@@ -694,6 +694,73 @@ describe('selectMatch', () => {
     expect(selectMatch(value)).toEqual(expected)
   })
 
+  it('should disambiguate multiple guid matches by enclosure when no conflict', () => {
+    const target = makeItem({ id: 'a', guidHash: 'guid-1', enclosureHash: 'enc-1' })
+    const value = {
+      hashes: { guidHash: 'guid-1', enclosureHash: 'enc-1' },
+      candidates: [
+        target,
+        makeItem({ id: 'b', guidHash: 'guid-1', enclosureHash: 'enc-2' }),
+        makeItem({ id: 'c', guidHash: 'guid-1', enclosureHash: null }),
+      ],
+      linkUniquenessRate: 1.0,
+    }
+    const expected = { match: target, identifierSource: 'guid' }
+
+    expect(selectMatch(value)).toEqual(expected)
+  })
+
+  it('should return undefined for ambiguous enclosure matches on high-uniqueness channel', () => {
+    const value = {
+      hashes: { enclosureHash: 'enc-1' },
+      candidates: [
+        makeItem({ id: 'a', enclosureHash: 'enc-1' }),
+        makeItem({ id: 'b', enclosureHash: 'enc-1' }),
+      ],
+      linkUniquenessRate: 0.98,
+    }
+
+    expect(selectMatch(value)).toBeUndefined()
+  })
+
+  it('should match on enclosure on low-uniqueness channel', () => {
+    const candidate = makeItem({ enclosureHash: 'enc-1' })
+    const value = {
+      hashes: { enclosureHash: 'enc-1' },
+      candidates: [candidate],
+      linkUniquenessRate: 0.3,
+    }
+    const expected = { match: candidate, identifierSource: 'enclosure' }
+
+    expect(selectMatch(value)).toEqual(expected)
+  })
+
+  it('should return undefined for ambiguous enclosure matches on low-uniqueness channel', () => {
+    const value = {
+      hashes: { enclosureHash: 'enc-1' },
+      candidates: [
+        makeItem({ id: 'a', enclosureHash: 'enc-1' }),
+        makeItem({ id: 'b', enclosureHash: 'enc-1' }),
+      ],
+      linkUniquenessRate: 0.3,
+    }
+
+    expect(selectMatch(value)).toBeUndefined()
+  })
+
+  it('should return undefined for ambiguous link-only matches on low-uniqueness channel', () => {
+    const value = {
+      hashes: { linkHash: 'link-1' },
+      candidates: [
+        makeItem({ id: 'a', linkHash: 'link-1' }),
+        makeItem({ id: 'b', linkHash: 'link-1' }),
+      ],
+      linkUniquenessRate: 0.3,
+    }
+
+    expect(selectMatch(value)).toBeUndefined()
+  })
+
   it('should return null when no hashes match any priority', () => {
     const value = {
       hashes: { guidHash: 'guid-x' },
