@@ -1,5 +1,12 @@
 import { generateChecksum128 } from './helpers.js'
-import { type CollisionMap, emptyCollisions, hashMeta, hasStrongHash } from './meta.js'
+import {
+  type CollisionMap,
+  dedupPaths,
+  emptyCollisions,
+  hashMeta,
+  hasStrongHash,
+  tagByKey,
+} from './meta.js'
 import type { HashableItem, ItemHashes } from './types.js'
 
 export {
@@ -43,97 +50,34 @@ const isSafeSplitter = (hash: string | undefined, collidingSet: Set<string>): bo
 }
 
 // Build a tagged key for within-batch dedup using nested collision refinement.
-// Starts with the strongest signal, only adds splitters when the current level
-// collides. Never uses a splitter that is itself colliding (conservative).
-// Returns undefined when no safe key can be built — item falls back to identifierKey in dedup.
+// Walks dedupPaths in priority order. For each path, if the primary hash exists
+// but collides, tries splitters in order. Never uses a splitter that is itself
+// colliding (conservative). Returns undefined when no safe key can be built —
+// item falls back to identifierKey in dedup.
 export const buildBatchDedupKey = (
   hashes: ItemHashes,
   collisions: CollisionMap = emptyCollisions,
 ): string | undefined => {
-  // GUID path: strongest signal.
-  if (hashes.guidHash) {
-    if (!collisions.guidHash.has(hashes.guidHash)) {
-      return `g:${hashes.guidHash}`
+  for (const { primaryKey, splitterKeys } of dedupPaths) {
+    const primaryHash = hashes[primaryKey]
+
+    if (!primaryHash) {
+      continue
     }
 
-    if (isSafeSplitter(hashes.guidFragmentHash, collisions.guidFragmentHash)) {
-      return `g:${hashes.guidHash}|gf:${hashes.guidFragmentHash}`
+    const primaryTag = tagByKey[primaryKey]
+
+    if (!collisions[primaryKey].has(primaryHash)) {
+      return `${primaryTag}:${primaryHash}`
     }
 
-    if (isSafeSplitter(hashes.enclosureHash, collisions.enclosureHash)) {
-      return `g:${hashes.guidHash}|e:${hashes.enclosureHash}`
-    }
-
-    if (isSafeSplitter(hashes.linkHash, collisions.linkHash)) {
-      return `g:${hashes.guidHash}|l:${hashes.linkHash}`
-    }
-
-    if (isSafeSplitter(hashes.linkFragmentHash, collisions.linkFragmentHash)) {
-      return `g:${hashes.guidHash}|lf:${hashes.linkFragmentHash}`
-    }
-
-    if (isSafeSplitter(hashes.titleHash, collisions.titleHash)) {
-      return `g:${hashes.guidHash}|t:${hashes.titleHash}`
+    for (const splitterKey of splitterKeys) {
+      if (isSafeSplitter(hashes[splitterKey], collisions[splitterKey])) {
+        return `${primaryTag}:${primaryHash}|${tagByKey[splitterKey]}:${hashes[splitterKey]}`
+      }
     }
 
     return
-  }
-
-  // Link path.
-  if (hashes.linkHash) {
-    if (!collisions.linkHash.has(hashes.linkHash)) {
-      return `l:${hashes.linkHash}`
-    }
-
-    if (isSafeSplitter(hashes.linkFragmentHash, collisions.linkFragmentHash)) {
-      return `l:${hashes.linkHash}|lf:${hashes.linkFragmentHash}`
-    }
-
-    if (isSafeSplitter(hashes.enclosureHash, collisions.enclosureHash)) {
-      return `l:${hashes.linkHash}|e:${hashes.enclosureHash}`
-    }
-
-    if (isSafeSplitter(hashes.titleHash, collisions.titleHash)) {
-      return `l:${hashes.linkHash}|t:${hashes.titleHash}`
-    }
-
-    return
-  }
-
-  // Enclosure-only path (no guid, no link).
-  if (hashes.enclosureHash) {
-    if (!collisions.enclosureHash.has(hashes.enclosureHash)) {
-      return `e:${hashes.enclosureHash}`
-    }
-
-    return
-  }
-
-  // Title path (no strong IDs).
-  if (hashes.titleHash) {
-    if (!collisions.titleHash.has(hashes.titleHash)) {
-      return `t:${hashes.titleHash}`
-    }
-
-    if (isSafeSplitter(hashes.contentHash, collisions.contentHash)) {
-      return `t:${hashes.titleHash}|c:${hashes.contentHash}`
-    }
-
-    if (isSafeSplitter(hashes.summaryHash, collisions.summaryHash)) {
-      return `t:${hashes.titleHash}|s:${hashes.summaryHash}`
-    }
-
-    return
-  }
-
-  // Content-only (last resort).
-  if (hashes.contentHash) {
-    return `c:${hashes.contentHash}`
-  }
-
-  // Summary-only (last resort).
-  if (hashes.summaryHash) {
-    return `s:${hashes.summaryHash}`
   }
 
   return

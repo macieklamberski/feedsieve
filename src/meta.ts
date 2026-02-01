@@ -117,6 +117,53 @@ export const hasStrongHash = (hashes: ItemHashes): boolean => {
   return hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
 }
 
+// Tag lookup by hash key for O(1) access in buildBatchDedupKey.
+export const tagByKey: Record<HashKey, string> = Object.fromEntries(
+  hashMeta.map((meta) => [meta.key, meta.tag]),
+) as Record<HashKey, string>
+
+// Splitter order per primary hash in buildBatchDedupKey.
+// Each entry: try the primary hash first, then try splitters in order.
+export type DedupPath = {
+  primaryKey: HashKey
+  splitterKeys: Array<HashKey>
+}
+
+// Dedup paths ordered by signal strength. When the primary collides,
+// splitters are tried in order until a non-colliding one is found.
+export const dedupPaths: Array<DedupPath> = [
+  {
+    primaryKey: 'guidHash',
+    splitterKeys: [
+      'guidFragmentHash',
+      'enclosureHash',
+      'linkHash',
+      'linkFragmentHash',
+      'titleHash',
+    ],
+  },
+  {
+    primaryKey: 'linkHash',
+    splitterKeys: ['linkFragmentHash', 'enclosureHash', 'titleHash'],
+  },
+  {
+    primaryKey: 'enclosureHash',
+    splitterKeys: [],
+  },
+  {
+    primaryKey: 'titleHash',
+    splitterKeys: ['contentHash', 'summaryHash'],
+  },
+  {
+    primaryKey: 'contentHash',
+    splitterKeys: [],
+  },
+  {
+    primaryKey: 'summaryHash',
+    splitterKeys: [],
+  },
+]
+
 // All hash keys derived from hashMeta.
 export const hashKeys: Array<HashKey> = hashMeta.map((meta) => meta.key)
 
