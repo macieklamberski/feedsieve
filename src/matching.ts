@@ -32,34 +32,30 @@ export const hasEnclosureConflict = (
   )
 }
 
-// In-memory filter: returns all existing items where any hash matches.
+// In-memory filter: returns all existing items where any matchable hash matches.
 // Does NOT apply gating — that's selectMatch's job.
-// Summary/content excluded: too volatile for cross-scan matching.
-// Title only checked when no strong hash exists — prevents title pulling
-// in unrelated candidates that would confuse selectMatch.
+// Non-matchable hashes (fragments, content, summary) are excluded: too volatile
+// or only used as tiebreakers. Title only checked when no strong hash exists —
+// prevents title pulling in unrelated candidates that would confuse selectMatch.
 export const findCandidatesForItem = (
   hashes: ItemHashes,
   existingItems: Array<MatchableItem>,
 ): Array<MatchableItem> => {
-  return existingItems.filter((existing) => {
-    if (hashes.guidHash && existing.guidHash === hashes.guidHash) {
-      return true
-    }
+  const hasStrong = hasStrongHash(hashes)
 
-    if (hashes.linkHash && existing.linkHash === hashes.linkHash) {
-      return true
-    }
+  return existingItems.filter((existing) =>
+    hashMeta.some((meta) => {
+      if (!meta.isMatchable || !hashes[meta.key]) {
+        return false
+      }
 
-    if (hashes.enclosureHash && existing.enclosureHash === hashes.enclosureHash) {
-      return true
-    }
+      if (!meta.isStrongHash && hasStrong) {
+        return false
+      }
 
-    if (!hasStrongHash(hashes) && hashes.titleHash && existing.titleHash === hashes.titleHash) {
-      return true
-    }
-
-    return false
-  })
+      return existing[meta.key] === hashes[meta.key]
+    }),
+  )
 }
 
 // Priority-based match selection with per-channel link gating.
