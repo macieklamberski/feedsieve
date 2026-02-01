@@ -21,6 +21,7 @@ export type HashMeta = {
   tag: string
   weight: number
   isStrongHash: boolean
+  isContent: boolean
   useAsIdentifier: IdentifierRule
   normalizeFn: (item: HashableItem) => string | undefined
 }
@@ -33,6 +34,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 'g',
     weight: 32,
     isStrongHash: true,
+    isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeGuidForHashing(item.guid),
   },
@@ -41,6 +43,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 'gf',
     weight: 0,
     isStrongHash: false,
+    isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeGuidFragmentForHashing(item.guid),
   },
@@ -49,6 +52,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 'l',
     weight: 8,
     isStrongHash: true,
+    isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeLinkForHashing(item.link),
   },
@@ -57,6 +61,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 'lf',
     weight: 0,
     isStrongHash: false,
+    isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeLinkFragmentForHashing(item.link),
   },
@@ -65,6 +70,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 'e',
     weight: 16,
     isStrongHash: true,
+    isContent: true,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeEnclosureForHashing(item.enclosures),
   },
@@ -73,6 +79,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 't',
     weight: 4,
     isStrongHash: false,
+    isContent: true,
     useAsIdentifier: 'onlyWhenNoStrong',
     normalizeFn: (item) => normalizeTextForHashing(item.title),
   },
@@ -81,6 +88,7 @@ export const hashMeta: Array<HashMeta> = [
     tag: 'c',
     weight: 2,
     isStrongHash: false,
+    isContent: true,
     useAsIdentifier: 'never',
     normalizeFn: (item) => normalizeHtmlForHashing(item.content),
   },
@@ -89,10 +97,15 @@ export const hashMeta: Array<HashMeta> = [
     tag: 's',
     weight: 1,
     isStrongHash: false,
+    isContent: true,
     useAsIdentifier: 'never',
     normalizeFn: (item) => normalizeHtmlForHashing(item.summary),
   },
 ]
+
+// Check if any strong hash (guid/link/enclosure) is present.
+export const hasStrongHash = (hashes: ItemHashes): boolean =>
+  hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
 
 // All hash keys derived from hashMeta.
 export const hashKeys: Array<HashKey> = hashMeta.map((meta) => meta.key)

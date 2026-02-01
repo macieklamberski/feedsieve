@@ -68,6 +68,7 @@ export const classifyItems = <TItem extends HashableItem>(input: {
         identifierSource: result.identifierSource,
       })
     }
+
     // Matched + unchanged → omitted from output.
   }
 

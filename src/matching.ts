@@ -1,22 +1,16 @@
 import { isDefined } from './helpers.js'
+import { hashMeta, hasStrongHash } from './meta.js'
 import type { ChannelProfile, ItemHashes, MatchableItem, MatchResult } from './types.js'
 
 // Detect meaningful content changes between existing and incoming item.
-// Compares title, summary, content, and enclosure hashes — not just content.
+// Compares all isContent hashes (title, summary, content, enclosure).
 // Uses loose inequality (!=) so null and undefined are treated as equal,
 // preventing false positives from DB null vs pipeline undefined.
-export const hasItemChanged = (existing: MatchableItem, incomingHashes: ItemHashes): boolean => {
-  return (
+export const hasItemChanged = (existing: MatchableItem, incomingHashes: ItemHashes): boolean =>
+  hashMeta
+    .filter((meta) => meta.isContent)
     /* biome-ignore lint/suspicious/noDoubleEquals: Intentional — null == undefined. */
-    existing.titleHash != incomingHashes.titleHash ||
-    /* biome-ignore lint/suspicious/noDoubleEquals: Intentional — null == undefined. */
-    existing.summaryHash != incomingHashes.summaryHash ||
-    /* biome-ignore lint/suspicious/noDoubleEquals: Intentional — null == undefined. */
-    existing.contentHash != incomingHashes.contentHash ||
-    /* biome-ignore lint/suspicious/noDoubleEquals: Intentional — null == undefined. */
-    existing.enclosureHash != incomingHashes.enclosureHash
-  )
-}
+    .some((meta) => existing[meta.key] != incomingHashes[meta.key])
 
 // Returns true when link is the item's only strong identifier
 // (no guid, no enclosure). Link-only items always get link matching
@@ -47,8 +41,6 @@ export const findCandidatesForItem = (
   hashes: ItemHashes,
   existingItems: Array<MatchableItem>,
 ): Array<MatchableItem> => {
-  const hasStrong = !!hashes.guidHash || !!hashes.linkHash || !!hashes.enclosureHash
-
   return existingItems.filter((existing) => {
     if (hashes.guidHash && existing.guidHash === hashes.guidHash) {
       return true
@@ -62,7 +54,7 @@ export const findCandidatesForItem = (
       return true
     }
 
-    if (!hasStrong && hashes.titleHash && existing.titleHash === hashes.titleHash) {
+    if (!hasStrongHash(hashes) && hashes.titleHash && existing.titleHash === hashes.titleHash) {
       return true
     }
 
@@ -219,9 +211,8 @@ export const selectMatch = (props: {
   // Only used when item has no strong hashes — prevents title from
   // accidentally merging items that have guid/link/enclosure but failed
   // to match on those (e.g. changed GUID with same title).
-  const hasStrong = !!hashes.guidHash || !!hashes.linkHash || !!hashes.enclosureHash
 
-  if (!hasStrong && hashes.titleHash) {
+  if (!hasStrongHash(hashes) && hashes.titleHash) {
     const byTitle = candidates.filter((candidate) => {
       return candidate.titleHash === hashes.titleHash
     })

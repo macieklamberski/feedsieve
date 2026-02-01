@@ -1,5 +1,5 @@
 import { generateChecksum128 } from './helpers.js'
-import { type CollisionMap, emptyCollisions, hashMeta } from './meta.js'
+import { type CollisionMap, emptyCollisions, hashMeta, hasStrongHash } from './meta.js'
 import type { HashableItem, ItemHashes } from './types.js'
 
 export {
@@ -19,9 +19,7 @@ export {
 // differing only by fragment (e.g. #Earth2 vs #LimeVPN) get distinct
 // identities. Returns undefined when no hashes exist.
 export const buildIdentifierKey = (hashes: ItemHashes): string | undefined => {
-  const hasStrongHash = hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
-
-  if (!hasStrongHash && !hashes.titleHash) {
+  if (!hasStrongHash(hashes) && !hashes.titleHash) {
     return
   }
 
@@ -30,7 +28,9 @@ export const buildIdentifierKey = (hashes: ItemHashes): string | undefined => {
     .filter((meta) => meta.useAsIdentifier !== 'never')
     .map((meta) => {
       const value =
-        meta.useAsIdentifier === 'onlyWhenNoStrong' && hasStrongHash ? '' : (hashes[meta.key] ?? '')
+        meta.useAsIdentifier === 'onlyWhenNoStrong' && hasStrongHash(hashes)
+          ? ''
+          : (hashes[meta.key] ?? '')
       return `${meta.tag}:${value}`
     })
 
