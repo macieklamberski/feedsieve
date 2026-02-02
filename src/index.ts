@@ -1,5 +1,6 @@
 export { classifyItems } from './classifier.js'
-export { computeItemHashes, normalizeLinkForHashing } from './hashes.js'
+export { computeFloorKey, computeItemHashes, normalizeLinkForHashing } from './hashes.js'
+export { identityLadder } from './meta.js'
 export {
   buildAllKeys,
   computeAllHashes,
@@ -9,11 +10,13 @@ export {
 } from './pipeline.js'
 export type {
   ClassificationResult,
+  ClassifyItemsInput,
   HashableItem,
   HashedFeedItem,
   InsertAction,
   ItemHashes,
   KeyedFeedItem,
+  LadderRung,
   MatchableItem,
   UpdateAction,
 } from './types.js'

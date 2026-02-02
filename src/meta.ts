@@ -7,7 +7,7 @@ import {
   normalizeLinkFragmentForHashing,
   normalizeTextForHashing,
 } from './normalize.js'
-import type { HashableItem, ItemHashes } from './types.js'
+import type { HashableItem, ItemHashes, LadderRung } from './types.js'
 
 // Hash key from ItemHashes.
 export type HashKey = keyof ItemHashes
@@ -25,10 +25,12 @@ export type HashMeta = {
   isContent: boolean
   useAsIdentifier: IdentifierRule
   normalizeFn: (item: HashableItem) => string | undefined
+  ladderRung?: LadderRung
+  dedupSplitters?: Array<HashKey>
 }
 
 // Single source of truth for hash key metadata.
-// Order matches the identifier key output: g, gf, l, lf, e, t.
+// Order determines identityLadder and dedupPaths derivation order.
 export const hashMeta: Array<HashMeta> = [
   {
     key: 'guidHash',
@@ -39,6 +41,14 @@ export const hashMeta: Array<HashMeta> = [
     isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeGuidForHashing(item.guid),
+    ladderRung: 'guidBase',
+    dedupSplitters: [
+      'guidFragmentHash',
+      'enclosureHash',
+      'linkHash',
+      'linkFragmentHash',
+      'titleHash',
+    ],
   },
   {
     key: 'guidFragmentHash',
@@ -49,6 +59,7 @@ export const hashMeta: Array<HashMeta> = [
     isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeGuidFragmentForHashing(item.guid),
+    ladderRung: 'guidWithFragment',
   },
   {
     key: 'linkHash',
@@ -59,6 +70,8 @@ export const hashMeta: Array<HashMeta> = [
     isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeLinkForHashing(item.link),
+    ladderRung: 'linkBase',
+    dedupSplitters: ['linkFragmentHash', 'enclosureHash', 'titleHash'],
   },
   {
     key: 'linkFragmentHash',
@@ -69,6 +82,7 @@ export const hashMeta: Array<HashMeta> = [
     isContent: false,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeLinkFragmentForHashing(item.link),
+    ladderRung: 'linkWithFragment',
   },
   {
     key: 'enclosureHash',
@@ -79,6 +93,8 @@ export const hashMeta: Array<HashMeta> = [
     isContent: true,
     useAsIdentifier: 'always',
     normalizeFn: (item) => normalizeEnclosureForHashing(item.enclosures),
+    ladderRung: 'enclosure',
+    dedupSplitters: [],
   },
   {
     key: 'titleHash',
@@ -89,6 +105,8 @@ export const hashMeta: Array<HashMeta> = [
     isContent: true,
     useAsIdentifier: 'onlyWhenNoStrong',
     normalizeFn: (item) => normalizeTextForHashing(item.title),
+    ladderRung: 'title',
+    dedupSplitters: ['contentHash', 'summaryHash'],
   },
   {
     key: 'contentHash',
@@ -99,6 +117,7 @@ export const hashMeta: Array<HashMeta> = [
     isContent: true,
     useAsIdentifier: 'never',
     normalizeFn: (item) => normalizeHtmlForHashing(item.content),
+    dedupSplitters: [],
   },
   {
     key: 'summaryHash',
@@ -109,6 +128,7 @@ export const hashMeta: Array<HashMeta> = [
     isContent: true,
     useAsIdentifier: 'never',
     normalizeFn: (item) => normalizeHtmlForHashing(item.summary),
+    dedupSplitters: [],
   },
 ]
 
@@ -122,6 +142,22 @@ export const tagByKey: Record<HashKey, string> = Object.fromEntries(
   hashMeta.map((meta) => [meta.key, meta.tag]),
 ) as Record<HashKey, string>
 
+// Ladder rungs ordered strongest → weakest. Each rung maps to a HashKey and tag.
+export type LadderEntry = {
+  rung: LadderRung
+  key: HashKey
+  tag: string
+}
+
+// Derived from hashMeta — entries with ladderRung form the identity ladder.
+export const identityLadder: Array<LadderEntry> = hashMeta
+  .filter((meta): meta is HashMeta & { ladderRung: LadderRung } => {
+    return meta.ladderRung !== undefined
+  })
+  .map((meta) => {
+    return { rung: meta.ladderRung, key: meta.key, tag: meta.tag }
+  })
+
 // Splitter order per primary hash in buildBatchDedupKey.
 // Each entry: try the primary hash first, then try splitters in order.
 export type DedupPath = {
@@ -129,40 +165,14 @@ export type DedupPath = {
   splitterKeys: Array<HashKey>
 }
 
-// Dedup paths ordered by signal strength. When the primary collides,
-// splitters are tried in order until a non-colliding one is found.
-export const dedupPaths: Array<DedupPath> = [
-  {
-    primaryKey: 'guidHash',
-    splitterKeys: [
-      'guidFragmentHash',
-      'enclosureHash',
-      'linkHash',
-      'linkFragmentHash',
-      'titleHash',
-    ],
-  },
-  {
-    primaryKey: 'linkHash',
-    splitterKeys: ['linkFragmentHash', 'enclosureHash', 'titleHash'],
-  },
-  {
-    primaryKey: 'enclosureHash',
-    splitterKeys: [],
-  },
-  {
-    primaryKey: 'titleHash',
-    splitterKeys: ['contentHash', 'summaryHash'],
-  },
-  {
-    primaryKey: 'contentHash',
-    splitterKeys: [],
-  },
-  {
-    primaryKey: 'summaryHash',
-    splitterKeys: [],
-  },
-]
+// Derived from hashMeta — entries with dedupSplitters form dedup paths.
+export const dedupPaths: Array<DedupPath> = hashMeta
+  .filter((meta): meta is HashMeta & { dedupSplitters: Array<HashKey> } => {
+    return meta.dedupSplitters !== undefined
+  })
+  .map((meta) => {
+    return { primaryKey: meta.key, splitterKeys: meta.dedupSplitters }
+  })
 
 // All hash keys derived from hashMeta.
 export const hashKeys: Array<HashKey> = hashMeta.map((meta) => meta.key)

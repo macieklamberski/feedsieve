@@ -1,4 +1,9 @@
-import { buildBatchDedupKey, buildIdentifierKey, computeItemHashes } from './hashes.js'
+import {
+  buildBatchDedupKey,
+  buildIdentifierKey,
+  buildIdentifierKeyLadder,
+  computeItemHashes,
+} from './hashes.js'
 import { type CollisionMap, hashKeys, hashMeta } from './meta.js'
 import type {
   HashableItem,
@@ -6,6 +11,7 @@ import type {
   IdentifiedFeedItem,
   ItemHashes,
   KeyedFeedItem,
+  LadderRung,
 } from './types.js'
 
 // Score an item by how many hash slots are populated, weighted by signal strength.
@@ -25,9 +31,7 @@ export const scoreItem = (hashes: ItemHashes): number => {
 export const computeAllHashes = <TItem extends HashableItem>(
   feedItems: Array<TItem>,
 ): Array<HashedFeedItem<TItem>> => {
-  return feedItems.map((feedItem) => {
-    return { feedItem, hashes: computeItemHashes(feedItem) }
-  })
+  return feedItems.map((feedItem) => ({ feedItem, hashes: computeItemHashes(feedItem) }))
 }
 
 // Step 2: Find hashes appearing >1 time per field.
@@ -48,14 +52,15 @@ export const detectCollisions = <TItem>(items: Array<HashedFeedItem<TItem>>): Co
         continue
       }
 
-      const dupSet = duplicates[key]
-
-      if (dupSet.has(value)) {
+      if (duplicates[key].has(value)) {
         continue
       }
 
-      if (seen[key].has(value)) dupSet.add(value)
-      else seen[key].add(value)
+      if (seen[key].has(value)) {
+        duplicates[key].add(value)
+      } else {
+        seen[key].add(value)
+      }
     }
   }
 
@@ -63,13 +68,17 @@ export const detectCollisions = <TItem>(items: Array<HashedFeedItem<TItem>>): Co
 }
 
 // Step 3: Compute identifierKey and batchDedupKey for each item.
+// When floorKey is provided, uses ladder-based identity instead of the default.
 export const buildAllKeys = <TItem>(
   items: Array<HashedFeedItem<TItem>>,
   collisions: CollisionMap,
+  floorKey?: LadderRung,
 ): Array<KeyedFeedItem<TItem>> => {
   return items.map((item) => ({
     ...item,
-    identifierKey: buildIdentifierKey(item.hashes),
+    identifierKey: floorKey
+      ? buildIdentifierKeyLadder(item.hashes, floorKey)
+      : buildIdentifierKey(item.hashes),
     batchDedupKey: buildBatchDedupKey(item.hashes, collisions),
   }))
 }
@@ -78,9 +87,7 @@ export const buildAllKeys = <TItem>(
 export const filterWithIdentifier = <TItem>(
   items: Array<KeyedFeedItem<TItem>>,
 ): Array<IdentifiedFeedItem<TItem>> => {
-  return items.filter((item): item is IdentifiedFeedItem<TItem> => {
-    return item.identifierKey !== undefined
-  })
+  return items.filter((item): item is IdentifiedFeedItem<TItem> => item.identifierKey !== undefined)
 }
 
 // Best-copy helper: keep the richer item (more hash slots populated).

@@ -1,3 +1,4 @@
+import { buildIdentifierKeyLadder, computeFloorKey } from './hashes.js'
 import { generateChecksum, isDefined } from './helpers.js'
 import {
   computeChannelProfile,
@@ -5,6 +6,7 @@ import {
   hasItemChanged,
   selectMatch,
 } from './matching.js'
+import { hashKeys } from './meta.js'
 import {
   buildAllKeys,
   computeAllHashes,
@@ -14,28 +16,121 @@ import {
 } from './pipeline.js'
 import type {
   ClassificationResult,
+  ClassifyItemsInput,
   HashableItem,
   InsertAction,
+  ItemHashes,
   MatchableItem,
   UpdateAction,
 } from './types.js'
 
-// Pure function: classify feed items against existing items into inserts/updates.
-export const classifyItems = <TItem extends HashableItem>(input: {
-  feedItems: Array<TItem>
-  existingItems: Array<MatchableItem>
-}): ClassificationResult<TItem> => {
-  const { feedItems, existingItems } = input
+// Convert MatchableItem (string | null) to ItemHashes (string | undefined).
+const toItemHashes = (item: MatchableItem): ItemHashes => {
+  const hashes: ItemHashes = {}
 
-  const hashed = computeAllHashes(feedItems)
-  const collisions = detectCollisions(hashed)
-  const keyed = buildAllKeys(hashed, collisions)
+  for (const key of hashKeys) {
+    const value = item[key]
+
+    if (value) {
+      hashes[key] = value
+    }
+  }
+
+  return hashes
+}
+
+// Pure function: classify feed items against existing items into inserts/updates.
+// When floorKey is provided, uses ladder-based identity; otherwise uses the
+// default buildIdentifierKey behavior and computes the optimal floor from data.
+export const classifyItems = <TItem extends HashableItem>(
+  input: ClassifyItemsInput<TItem>,
+): ClassificationResult<TItem> => {
+  const { feedItems, existingItems, floorKey: inputFloorKey } = input
+
+  const hashedItems = computeAllHashes(feedItems)
+  const incomingHashes = hashedItems.map((item) => item.hashes)
+
+  // Compute profile early — used for both pre-match exclusion and final
+  // classification. Uses raw (not deduped) incoming link hashes; duplicates
+  // lower uniqueness slightly, which is conservative (fewer link matches).
+  const incomingLinkHashes = incomingHashes.map((hashes) => hashes.linkHash).filter(isDefined)
+  const profile = computeChannelProfile(existingItems, incomingLinkHashes)
+
+  // Pre-match: find existing items that are true updates and exclude them
+  // from the floor collision set. A match is "strong enough" when it's by
+  // guid, enclosure, or title — those are unambiguously the same item. A
+  // link match is only trusted when the max-rung keys agree (true duplicate);
+  // a bare link match with different titles could be hub onset and must stay
+  // in the collision set so the floor can detect it.
+  const matchedExistingIds = new Set<string>()
+
+  for (const { hashes } of hashedItems) {
+    const candidates = findCandidatesForItem(hashes, existingItems)
+    const result = selectMatch({
+      hashes,
+      candidates,
+      linkUniquenessRate: profile.linkUniquenessRate,
+    })
+
+    if (!result) {
+      continue
+    }
+
+    if (result.identifierSource !== 'link') {
+      matchedExistingIds.add(result.match.id)
+      continue
+    }
+
+    // Link match: only exclude when max-rung keys agree (true duplicate).
+    const incomingMaxKey = buildIdentifierKeyLadder(hashes, 'title')
+    const existingMaxKey = buildIdentifierKeyLadder(toItemHashes(result.match), 'title')
+
+    if (incomingMaxKey === existingMaxKey) {
+      matchedExistingIds.add(result.match.id)
+    }
+  }
+
+  const unmatchedExistingHashes = existingItems
+    .filter((item) => !matchedExistingIds.has(item.id))
+    .map(toItemHashes)
+
+  // Dedup by max-rung ladder key so identity-equivalent items (literal feed
+  // duplicates, or same item with slightly different hash coverage) don't
+  // cause false downgrades. Items with no ladder identity are skipped.
+  const seenKeys = new Set<string>()
+  const floorHashes = [...incomingHashes, ...unmatchedExistingHashes].filter((hashes) => {
+    const maxKey = buildIdentifierKeyLadder(hashes, 'title')
+
+    if (!maxKey) {
+      return false
+    }
+
+    if (seenKeys.has(maxKey)) {
+      return false
+    }
+
+    seenKeys.add(maxKey)
+    return true
+  })
+
+  // Resolve floor: validate/downgrade if provided, compute from data otherwise.
+  const resolvedFloorKey = computeFloorKey(floorHashes, inputFloorKey)
+  const floorKeyChanged = inputFloorKey !== undefined && resolvedFloorKey !== inputFloorKey
+
+  // When no floorKey was provided, pass undefined to preserve old behavior.
+  const effectiveFloorKey = inputFloorKey !== undefined ? resolvedFloorKey : undefined
+
+  // Ladder mode skips collision detection — the floor is collision-free by
+  // construction, so dedup by identifierKey alone is sufficient.
+  const keyed = effectiveFloorKey
+    ? hashedItems.map((item) => ({
+        ...item,
+        identifierKey: buildIdentifierKeyLadder(item.hashes, effectiveFloorKey),
+        batchDedupKey: undefined as string | undefined,
+      }))
+    : buildAllKeys(hashedItems, detectCollisions(hashedItems))
   const identified = filterWithIdentifier(keyed)
   const deduplicated = deduplicateByBatchKey(identified)
-
-  // Compute profile from existing + incoming link hashes.
-  const incomingLinkHashes = deduplicated.map((item) => item.hashes.linkHash).filter(isDefined)
-  const profile = computeChannelProfile(existingItems, incomingLinkHashes)
 
   // Classify against existing items.
   const inserts: Array<InsertAction<TItem>> = []
@@ -44,9 +139,21 @@ export const classifyItems = <TItem extends HashableItem>(input: {
   for (const item of deduplicated) {
     const identifierHash = generateChecksum(item.identifierKey)
     const candidates = findCandidatesForItem(item.hashes, existingItems)
+
+    // When ladder identity is active, reject candidates whose ladder key
+    // differs from the incoming item. This prevents matching (and merging)
+    // items that the ladder considers distinct.
+    const floorFilteredCandidates = effectiveFloorKey
+      ? candidates.filter(
+          (candidate) =>
+            buildIdentifierKeyLadder(toItemHashes(candidate), effectiveFloorKey) ===
+            item.identifierKey,
+        )
+      : candidates
+
     const result = selectMatch({
       hashes: item.hashes,
-      candidates,
+      candidates: floorFilteredCandidates,
       linkUniquenessRate: profile.linkUniquenessRate,
     })
 
@@ -69,8 +176,8 @@ export const classifyItems = <TItem extends HashableItem>(input: {
       })
     }
 
-    // Matched + unchanged → omitted from output.
+    // Otherwise, if matched and unchanged - omit from output.
   }
 
-  return { inserts, updates }
+  return { inserts, updates, floorKey: resolvedFloorKey, floorKeyChanged }
 }

@@ -1,3 +1,12 @@
+// Rungs of the identity ladder, strongest → weakest.
+export type LadderRung =
+  | 'guidBase'
+  | 'guidWithFragment'
+  | 'linkBase'
+  | 'linkWithFragment'
+  | 'enclosure'
+  | 'title'
+
 export type HashableItem = {
   guid?: string
   link?: string
@@ -70,7 +79,15 @@ export type UpdateAction<TItem> = {
   identifierSource: string
 }
 
+export type ClassifyItemsInput<TItem extends HashableItem = HashableItem> = {
+  feedItems: Array<TItem>
+  existingItems: Array<MatchableItem>
+  floorKey?: LadderRung
+}
+
 export type ClassificationResult<TItem> = {
   inserts: Array<InsertAction<TItem>>
   updates: Array<UpdateAction<TItem>>
+  floorKey: LadderRung
+  floorKeyChanged: boolean
 }
