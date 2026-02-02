@@ -47,13 +47,11 @@ export type HashedFeedItem<TItem> = {
 
 export type KeyedFeedItem<TItem> = HashedFeedItem<TItem> & {
   identifierKey: string | undefined
-  batchDedupKey: string | undefined
 }
 
 // KeyedFeedItem after filterWithIdentifier — identifierKey is guaranteed set.
 export type IdentifiedFeedItem<TItem> = HashedFeedItem<TItem> & {
   identifierKey: string
-  batchDedupKey: string | undefined
 }
 
 export type ChannelProfile = {

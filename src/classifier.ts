@@ -7,13 +7,7 @@ import {
   selectMatch,
 } from './matching.js'
 import { hashKeys } from './meta.js'
-import {
-  buildAllKeys,
-  computeAllHashes,
-  deduplicateByBatchKey,
-  detectCollisions,
-  filterWithIdentifier,
-} from './pipeline.js'
+import { computeAllHashes, deduplicateByIdentifierKey, filterWithIdentifier } from './pipeline.js'
 import type {
   ClassificationResult,
   ClassifyItemsInput,
@@ -40,8 +34,7 @@ const toItemHashes = (item: MatchableItem): ItemHashes => {
 }
 
 // Pure function: classify feed items against existing items into inserts/updates.
-// When floorKey is provided, uses ladder-based identity; otherwise uses the
-// default buildIdentifierKey behavior and computes the optimal floor from data.
+// Uses ladder-based identity with auto-computed floor when floorKey is not provided.
 export const classifyItems = <TItem extends HashableItem>(
   input: ClassifyItemsInput<TItem>,
 ): ClassificationResult<TItem> => {
@@ -117,20 +110,13 @@ export const classifyItems = <TItem extends HashableItem>(
   const resolvedFloorKey = computeFloorKey(floorHashes, inputFloorKey)
   const floorKeyChanged = inputFloorKey !== undefined && resolvedFloorKey !== inputFloorKey
 
-  // When no floorKey was provided, pass undefined to preserve old behavior.
-  const effectiveFloorKey = inputFloorKey !== undefined ? resolvedFloorKey : undefined
-
-  // Ladder mode skips collision detection — the floor is collision-free by
-  // construction, so dedup by identifierKey alone is sufficient.
-  const keyed = effectiveFloorKey
-    ? hashedItems.map((item) => ({
-        ...item,
-        identifierKey: buildIdentifierKeyLadder(item.hashes, effectiveFloorKey),
-        batchDedupKey: undefined as string | undefined,
-      }))
-    : buildAllKeys(hashedItems, detectCollisions(hashedItems))
+  // Build keyed items using ladder identity at the resolved floor.
+  const keyed = hashedItems.map((item) => ({
+    ...item,
+    identifierKey: buildIdentifierKeyLadder(item.hashes, resolvedFloorKey),
+  }))
   const identified = filterWithIdentifier(keyed)
-  const deduplicated = deduplicateByBatchKey(identified)
+  const deduplicated = deduplicateByIdentifierKey(identified)
 
   // Classify against existing items.
   const inserts: Array<InsertAction<TItem>> = []
@@ -140,16 +126,12 @@ export const classifyItems = <TItem extends HashableItem>(
     const identifierHash = generateChecksum(item.identifierKey)
     const candidates = findCandidatesForItem(item.hashes, existingItems)
 
-    // When ladder identity is active, reject candidates whose ladder key
-    // differs from the incoming item. This prevents matching (and merging)
-    // items that the ladder considers distinct.
-    const floorFilteredCandidates = effectiveFloorKey
-      ? candidates.filter(
-          (candidate) =>
-            buildIdentifierKeyLadder(toItemHashes(candidate), effectiveFloorKey) ===
-            item.identifierKey,
-        )
-      : candidates
+    // Reject candidates whose ladder key differs from the incoming item.
+    // This prevents matching (and merging) items that the ladder considers distinct.
+    const floorFilteredCandidates = candidates.filter(
+      (candidate) =>
+        buildIdentifierKeyLadder(toItemHashes(candidate), resolvedFloorKey) === item.identifierKey,
+    )
 
     const result = selectMatch({
       hashes: item.hashes,
@@ -176,7 +158,7 @@ export const classifyItems = <TItem extends HashableItem>(
       })
     }
 
-    // Otherwise, if matched and unchanged - omit from output.
+    // Otherwise, if matched and unchanged — omit from output.
   }
 
   return { inserts, updates, floorKey: resolvedFloorKey, floorKeyChanged }

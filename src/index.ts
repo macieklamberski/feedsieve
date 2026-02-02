@@ -1,11 +1,14 @@
 export { classifyItems } from './classifier.js'
-export { computeFloorKey, computeItemHashes, normalizeLinkForHashing } from './hashes.js'
+export {
+  buildIdentifierKeyLadder,
+  computeFloorKey,
+  computeItemHashes,
+  normalizeLinkForHashing,
+} from './hashes.js'
 export { identityLadder } from './meta.js'
 export {
-  buildAllKeys,
   computeAllHashes,
-  deduplicateByBatchKey,
-  detectCollisions,
+  deduplicateByIdentifierKey,
   filterWithIdentifier,
 } from './pipeline.js'
 export type {

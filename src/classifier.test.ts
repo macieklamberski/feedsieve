@@ -808,36 +808,6 @@ describe('classifyItems', () => {
     expect(classifyItems(value)).toEqual(expected)
   })
 
-  it('should update link-only item with changed title when no floor', () => {
-    const feedItem = { link: 'https://example.com/post', title: 'New Title' }
-    const value: ClassifyItemsInput = {
-      feedItems: [feedItem],
-      existingItems: [
-        makeMatchable({
-          id: 'existing-1',
-          link: 'https://example.com/post',
-          title: 'Old Title',
-        }),
-      ],
-    }
-    const expected: ClassificationResult<HashableItem> = {
-      inserts: [],
-      updates: [
-        {
-          feedItem,
-          hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-          existingItemId: 'existing-1',
-          identifierSource: 'link',
-        },
-      ],
-      floorKey: 'title',
-      floorKeyChanged: false,
-    }
-
-    expect(classifyItems(value)).toEqual(expected)
-  })
-
   it('should insert when fragment added and floor active', () => {
     const feedItem = { link: 'https://example.com/post#comments', title: 'Post Title' }
     const value: ClassifyItemsInput = {
@@ -862,41 +832,6 @@ describe('classifyItems', () => {
       updates: [],
       floorKey: 'linkWithFragment',
       floorKeyChanged: true,
-    }
-
-    expect(classifyItems(value)).toEqual(expected)
-  })
-
-  it('should update when fragment added and no floor', () => {
-    const feedItem = {
-      link: 'https://example.com/post#comments',
-      title: 'Post Title',
-      content: 'New content',
-    }
-    const value: ClassifyItemsInput = {
-      feedItems: [feedItem],
-      existingItems: [
-        makeMatchable({
-          id: 'existing-1',
-          link: 'https://example.com/post',
-          title: 'Post Title',
-          content: 'Old content',
-        }),
-      ],
-    }
-    const expected: ClassificationResult<HashableItem> = {
-      inserts: [],
-      updates: [
-        {
-          feedItem,
-          hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-          existingItemId: 'existing-1',
-          identifierSource: 'link',
-        },
-      ],
-      floorKey: 'linkWithFragment',
-      floorKeyChanged: false,
     }
 
     expect(classifyItems(value)).toEqual(expected)
@@ -1234,29 +1169,6 @@ describe('classifyItems', () => {
       updates: [],
       floorKey: 'enclosure',
       floorKeyChanged: true,
-    }
-
-    expect(classifyItems(value)).toEqual(expected)
-  })
-
-  it('should dedup hub items to single insert when no floor applied', () => {
-    const feedItemA = { link: 'https://example.com/shared', title: 'Article A' }
-    const feedItemB = { link: 'https://example.com/shared', title: 'Article B' }
-    const value: ClassifyItemsInput = {
-      feedItems: [feedItemA, feedItemB],
-      existingItems: [],
-    }
-    const expected: ClassificationResult<HashableItem> = {
-      inserts: [
-        {
-          feedItem: feedItemA,
-          hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-        },
-      ],
-      updates: [],
-      floorKey: 'title',
-      floorKeyChanged: false,
     }
 
     expect(classifyItems(value)).toEqual(expected)

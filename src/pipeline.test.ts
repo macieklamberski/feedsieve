@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 import { computeItemHashes } from './hashes.js'
-import { type CollisionMap, emptyCollisions } from './meta.js'
 import {
-  buildAllKeys,
   computeAllHashes,
-  deduplicateByBatchKey,
-  detectCollisions,
+  deduplicateByIdentifierKey,
   filterWithIdentifier,
   scoreItem,
 } from './pipeline.js'
-import type {
-  HashableItem,
-  HashedFeedItem,
-  IdentifiedFeedItem,
-  ItemHashes,
-  KeyedFeedItem,
-} from './types.js'
+import type { HashableItem, IdentifiedFeedItem, ItemHashes, KeyedFeedItem } from './types.js'
 
 describe('scoreItem', () => {
   it('should sum weights for multiple hashes', () => {
@@ -71,126 +62,20 @@ describe('computeAllHashes', () => {
   })
 })
 
-describe('detectCollisions', () => {
-  it('should detect all collision types', () => {
-    const value: Array<HashedFeedItem<HashableItem>> = [
-      {
-        feedItem: {},
-        hashes: {
-          guidHash: 'g1',
-          guidFragmentHash: 'gf1',
-          linkHash: 'l1',
-          linkFragmentHash: 'lf1',
-          enclosureHash: 'e1',
-          titleHash: 't1',
-          contentHash: 'c1',
-          summaryHash: 's1',
-        },
-      },
-      {
-        feedItem: {},
-        hashes: {
-          guidHash: 'g1',
-          guidFragmentHash: 'gf1',
-          linkHash: 'l1',
-          linkFragmentHash: 'lf1',
-          enclosureHash: 'e1',
-          titleHash: 't1',
-          contentHash: 'c1',
-          summaryHash: 's1',
-        },
-      },
-    ]
-    const expected: CollisionMap = {
-      guidHash: new Set(['g1']),
-      guidFragmentHash: new Set(['gf1']),
-      linkHash: new Set(['l1']),
-      linkFragmentHash: new Set(['lf1']),
-      enclosureHash: new Set(['e1']),
-      titleHash: new Set(['t1']),
-      contentHash: new Set(['c1']),
-      summaryHash: new Set(['s1']),
-    }
-
-    expect(detectCollisions(value)).toEqual(expected)
-  })
-
-  it('should return empty sets when all hashes are unique', () => {
-    const value: Array<HashedFeedItem<HashableItem>> = [
-      { feedItem: {}, hashes: { guidHash: 'g1', linkHash: 'l1' } },
-      { feedItem: {}, hashes: { guidHash: 'g2', linkHash: 'l2' } },
-    ]
-
-    expect(detectCollisions(value)).toEqual(emptyCollisions)
-  })
-
-  it('should only mark duplicated hashes, not unique ones', () => {
-    const value: Array<HashedFeedItem<HashableItem>> = [
-      { feedItem: {}, hashes: { guidHash: 'g1' } },
-      { feedItem: {}, hashes: { guidHash: 'g1' } },
-      { feedItem: {}, hashes: { guidHash: 'g2' } },
-    ]
-    const expected: CollisionMap = {
-      ...emptyCollisions,
-      guidHash: new Set(['g1']),
-    }
-
-    expect(detectCollisions(value)).toEqual(expected)
-  })
-
-  it('should return empty sets for empty input', () => {
-    expect(detectCollisions([])).toEqual(emptyCollisions)
-  })
-})
-
-describe('buildAllKeys', () => {
-  it('should compute identifier and batch dedup keys', () => {
-    const value: Array<HashedFeedItem<HashableItem>> = [
-      { feedItem: { guid: 'g1' }, hashes: { guidHash: 'gh1' } },
-    ]
-    const expected = [
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: expect.any(String),
-        batchDedupKey: 'g:gh1',
-      },
-    ]
-
-    expect(buildAllKeys(value, emptyCollisions)).toEqual(expected)
-  })
-
-  it('should set undefined keys when no usable hashes', () => {
-    const value: Array<HashedFeedItem<HashableItem>> = [{ feedItem: {}, hashes: {} }]
-    const expected = [
-      {
-        feedItem: {},
-        hashes: {},
-        identifierKey: undefined,
-        batchDedupKey: undefined,
-      },
-    ]
-
-    expect(buildAllKeys(value, emptyCollisions)).toEqual(expected)
-  })
-})
-
 describe('filterWithIdentifier', () => {
   it('should keep items with identifier', () => {
     const value: Array<KeyedFeedItem<HashableItem>> = [
       {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1|gf:|l:|lf:|e:|t:',
-        batchDedupKey: 'g:gh1',
+        identifierKey: 'g:gh1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1|gf:|l:|lf:|e:|t:',
-        batchDedupKey: 'g:gh1',
+        identifierKey: 'g:gh1',
       },
     ]
 
@@ -202,34 +87,29 @@ describe('filterWithIdentifier', () => {
       {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1|gf:|l:|lf:|e:|t:',
-        batchDedupKey: 'g:gh1',
+        identifierKey: 'g:gh1',
       },
       {
         feedItem: {},
         hashes: {},
         identifierKey: undefined,
-        batchDedupKey: undefined,
       },
       {
         feedItem: { title: 'Title' },
         hashes: { titleHash: 'th1' },
         identifierKey: 'g:|gf:|l:|lf:|e:|t:th1',
-        batchDedupKey: 't:th1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1|gf:|l:|lf:|e:|t:',
-        batchDedupKey: 'g:gh1',
+        identifierKey: 'g:gh1',
       },
       {
         feedItem: { title: 'Title' },
         hashes: { titleHash: 'th1' },
         identifierKey: 'g:|gf:|l:|lf:|e:|t:th1',
-        batchDedupKey: 't:th1',
       },
     ]
 
@@ -242,7 +122,6 @@ describe('filterWithIdentifier', () => {
         feedItem: {},
         hashes: {},
         identifierKey: undefined,
-        batchDedupKey: undefined,
       },
     ]
 
@@ -250,20 +129,18 @@ describe('filterWithIdentifier', () => {
   })
 })
 
-describe('deduplicateByBatchKey', () => {
+describe('deduplicateByIdentifierKey', () => {
   it('should keep first item when duplicates have equal scores', () => {
     const value: Array<IdentifiedFeedItem<HashableItem>> = [
       {
         feedItem: { guid: 'g1', content: 'first' },
         hashes: { guidHash: 'gh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
       {
         feedItem: { guid: 'g1', content: 'second' },
         hashes: { guidHash: 'gh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
@@ -271,11 +148,10 @@ describe('deduplicateByBatchKey', () => {
         feedItem: { guid: 'g1', content: 'first' },
         hashes: { guidHash: 'gh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
     ]
 
-    expect(deduplicateByBatchKey(value)).toEqual(expected)
+    expect(deduplicateByIdentifierKey(value)).toEqual(expected)
   })
 
   it('should keep richer item when scores differ', () => {
@@ -284,13 +160,11 @@ describe('deduplicateByBatchKey', () => {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
       {
         feedItem: { guid: 'g1', link: 'https://example.com' },
         hashes: { guidHash: 'gh1', linkHash: 'lh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
@@ -298,32 +172,23 @@ describe('deduplicateByBatchKey', () => {
         feedItem: { guid: 'g1', link: 'https://example.com' },
         hashes: { guidHash: 'gh1', linkHash: 'lh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
     ]
 
-    expect(deduplicateByBatchKey(value)).toEqual(expected)
+    expect(deduplicateByIdentifierKey(value)).toEqual(expected)
   })
 
-  it('should handle mix of keyed and unkeyed items', () => {
+  it('should keep items with different identifierKeys', () => {
     const value: Array<IdentifiedFeedItem<HashableItem>> = [
       {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
-      },
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
       {
         feedItem: { guid: 'g2' },
         hashes: { guidHash: 'gh2' },
         identifierKey: 'key2',
-        batchDedupKey: undefined,
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
@@ -331,107 +196,18 @@ describe('deduplicateByBatchKey', () => {
         feedItem: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
         identifierKey: 'key1',
-        batchDedupKey: 'g:gh1',
       },
       {
         feedItem: { guid: 'g2' },
         hashes: { guidHash: 'gh2' },
         identifierKey: 'key2',
-        batchDedupKey: undefined,
       },
     ]
 
-    expect(deduplicateByBatchKey(value)).toEqual(expected)
-  })
-
-  it('should collapse items with different batch keys but same identifierKey', () => {
-    const value: Array<IdentifiedFeedItem<HashableItem>> = [
-      {
-        feedItem: { guid: 'g1', link: 'https://example.com/a' },
-        hashes: { guidHash: 'gh1', linkHash: 'lh-a' },
-        identifierKey: 'g:gh1|gf:|l:lh-a|lf:|e:|t:',
-        batchDedupKey: 'g:gh1|l:lh-a',
-      },
-      {
-        feedItem: { guid: 'g1', link: 'https://example.com/b' },
-        hashes: { guidHash: 'gh1', linkHash: 'lh-b' },
-        identifierKey: 'g:gh1|gf:|l:lh-a|lf:|e:|t:',
-        batchDedupKey: 'g:gh1|l:lh-b',
-      },
-    ]
-    const expected: Array<IdentifiedFeedItem<HashableItem>> = [
-      {
-        feedItem: { guid: 'g1', link: 'https://example.com/a' },
-        hashes: { guidHash: 'gh1', linkHash: 'lh-a' },
-        identifierKey: 'g:gh1|gf:|l:lh-a|lf:|e:|t:',
-        batchDedupKey: 'g:gh1|l:lh-a',
-      },
-    ]
-
-    expect(deduplicateByBatchKey(value)).toEqual(expected)
-  })
-
-  it('should dedup items with undefined batch key using identifierKey fallback', () => {
-    const value: Array<IdentifiedFeedItem<HashableItem>> = [
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
-        batchDedupKey: undefined,
-      },
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
-        batchDedupKey: undefined,
-      },
-    ]
-    const expected: Array<IdentifiedFeedItem<HashableItem>> = [
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
-        batchDedupKey: undefined,
-      },
-    ]
-
-    expect(deduplicateByBatchKey(value)).toEqual(expected)
-  })
-
-  it('should keep items with different identifierKeys when batch key is undefined', () => {
-    const value: Array<IdentifiedFeedItem<HashableItem>> = [
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
-        batchDedupKey: undefined,
-      },
-      {
-        feedItem: { guid: 'g2' },
-        hashes: { guidHash: 'gh2' },
-        identifierKey: 'key2',
-        batchDedupKey: undefined,
-      },
-    ]
-    const expected: Array<IdentifiedFeedItem<HashableItem>> = [
-      {
-        feedItem: { guid: 'g1' },
-        hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
-        batchDedupKey: undefined,
-      },
-      {
-        feedItem: { guid: 'g2' },
-        hashes: { guidHash: 'gh2' },
-        identifierKey: 'key2',
-        batchDedupKey: undefined,
-      },
-    ]
-
-    expect(deduplicateByBatchKey(value)).toEqual(expected)
+    expect(deduplicateByIdentifierKey(value)).toEqual(expected)
   })
 
   it('should return empty array for empty input', () => {
-    expect(deduplicateByBatchKey([])).toEqual([])
+    expect(deduplicateByIdentifierKey([])).toEqual([])
   })
 })
