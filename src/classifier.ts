@@ -1,5 +1,5 @@
 import { buildIdentifierKeyLadder, computeFloorKey } from './hashes.js'
-import { generateChecksum, isDefined } from './helpers.js'
+import { generateHash, isDefined } from './helpers.js'
 import {
   computeChannelProfile,
   findCandidatesForItem,
@@ -123,7 +123,7 @@ export const classifyItems = <TItem extends HashableItem>(
   const updates: Array<UpdateAction<TItem>> = []
 
   for (const item of deduplicated) {
-    const identifierHash = generateChecksum(item.identifierKey)
+    const identifierHash = generateHash(item.identifierKey)
     const candidates = findCandidatesForItem(item.hashes, existingItems)
 
     // Reject candidates whose ladder key differs from the incoming item.

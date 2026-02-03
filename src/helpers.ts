@@ -1,8 +1,4 @@
-export const generateChecksum = (...values: Array<string | null | undefined>) => {
-  return new Bun.CryptoHasher('sha256').update(values.join('\0')).digest('hex')
-}
-
-export const generateChecksum128 = (...values: Array<string | null | undefined>) => {
+export const generateHash = (...values: Array<string | null | undefined>) => {
   return new Bun.CryptoHasher('sha256').update(values.join('\0')).digest('hex').slice(0, 32)
 }
 

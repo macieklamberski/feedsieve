@@ -1,4 +1,4 @@
-import { generateChecksum128 } from './helpers.js'
+import { generateHash } from './helpers.js'
 import { hashMeta, identityLadder } from './meta.js'
 import type { HashableItem, ItemHashes, LadderRung } from './types.js'
 
@@ -94,7 +94,7 @@ export const computeItemHashes = <TItem extends HashableItem>(feedItem: TItem): 
     const normalized = meta.normalizeFn(feedItem)
 
     if (normalized) {
-      hashes[meta.key] = generateChecksum128(normalized)
+      hashes[meta.key] = generateHash(normalized)
     }
   }
 

@@ -39,12 +39,12 @@ describe('classifyItems', () => {
         {
           feedItem: { guid: 'guid-1', title: 'Post 1' },
           hashes: computeItemHashes({ guid: 'guid-1', title: 'Post 1' }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: { guid: 'guid-2', title: 'Post 2' },
           hashes: computeItemHashes({ guid: 'guid-2', title: 'Post 2' }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -77,7 +77,7 @@ describe('classifyItems', () => {
             title: 'Updated Title',
             content: 'New content',
           }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'guid',
         },
@@ -115,14 +115,14 @@ describe('classifyItems', () => {
         {
           feedItem: { guid: 'guid-3', title: 'Brand New' },
           hashes: computeItemHashes({ guid: 'guid-3', title: 'Brand New' }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [
         {
           feedItem: { guid: 'guid-2', title: 'Changed Title', content: 'New' },
           hashes: computeItemHashes({ guid: 'guid-2', title: 'Changed Title', content: 'New' }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-2',
           identifierSource: 'guid',
         },
@@ -152,7 +152,7 @@ describe('classifyItems', () => {
         {
           feedItem: { guid: 'guid-1', title: 'Updated', content: 'New content' },
           hashes: computeItemHashes({ guid: 'guid-1', title: 'Updated', content: 'New content' }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'guid',
         },
@@ -192,7 +192,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'enclosure',
         },
@@ -248,7 +248,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -272,7 +272,7 @@ describe('classifyItems', () => {
         {
           feedItem: { guid: 'guid-1', title: 'Post' },
           hashes: computeItemHashes({ guid: 'guid-1', title: 'Post' }),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -294,7 +294,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -332,12 +332,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -378,12 +378,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -407,12 +407,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItem1,
           hashes: computeItemHashes(feedItem1),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItem2,
           hashes: computeItemHashes(feedItem2),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -437,7 +437,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -461,12 +461,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -506,7 +506,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -543,7 +543,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -576,7 +576,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -624,12 +624,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItem1,
           hashes: computeItemHashes(feedItem1),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItem2,
           hashes: computeItemHashes(feedItem2),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -653,12 +653,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -689,7 +689,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'guid',
         },
@@ -725,7 +725,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'link',
         },
@@ -767,7 +767,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'enclosure',
         },
@@ -797,7 +797,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -826,7 +826,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -855,7 +855,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -888,7 +888,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -910,7 +910,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -934,12 +934,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItem1,
           hashes: computeItemHashes(feedItem1),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItem3,
           hashes: computeItemHashes(feedItem3),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -963,12 +963,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1000,12 +1000,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1037,12 +1037,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1066,12 +1066,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItem1,
           hashes: computeItemHashes(feedItem1),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItem2,
           hashes: computeItemHashes(feedItem2),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1100,7 +1100,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1124,12 +1124,12 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
         {
           feedItem: feedItemB,
           hashes: computeItemHashes(feedItemB),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1163,7 +1163,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1194,7 +1194,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'guid',
         },
@@ -1229,7 +1229,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1300,7 +1300,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1341,7 +1341,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-2',
           identifierSource: 'link',
         },
@@ -1390,7 +1390,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
           existingItemId: 'existing-1',
           identifierSource: 'title',
         },
@@ -1414,7 +1414,7 @@ describe('classifyItems', () => {
         {
           feedItem: feedItemA,
           hashes: computeItemHashes(feedItemA),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1449,7 +1449,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
@@ -1484,7 +1484,7 @@ describe('classifyItems', () => {
         {
           feedItem,
           hashes: computeItemHashes(feedItem),
-          identifierHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          identifierHash: expect.stringMatching(/^[a-f0-9]{32}$/),
         },
       ],
       updates: [],
