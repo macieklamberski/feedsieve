@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { computeItemHashes } from './hashes.js'
 import {
   computeAllHashes,
-  deduplicateByIdentifierKey,
+  deduplicateByIdentifier,
   filterWithIdentifier,
   scoreItem,
 } from './pipeline.js'
@@ -45,11 +45,11 @@ describe('computeAllHashes', () => {
     ]
     const expected = [
       {
-        feedItem: { guid: 'guid-1', title: 'Title 1' },
+        item: { guid: 'guid-1', title: 'Title 1' },
         hashes: computeItemHashes({ guid: 'guid-1', title: 'Title 1' }),
       },
       {
-        feedItem: { link: 'https://example.com/post' },
+        item: { link: 'https://example.com/post' },
         hashes: computeItemHashes({ link: 'https://example.com/post' }),
       },
     ]
@@ -66,16 +66,16 @@ describe('filterWithIdentifier', () => {
   it('should keep items with identifier', () => {
     const value: Array<KeyedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1',
+        identifier: 'g:gh1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1',
+        identifier: 'g:gh1',
       },
     ]
 
@@ -85,31 +85,31 @@ describe('filterWithIdentifier', () => {
   it('should filter mixed items keeping only identified ones', () => {
     const value: Array<KeyedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1',
+        identifier: 'g:gh1',
       },
       {
-        feedItem: {},
+        item: {},
         hashes: {},
-        identifierKey: undefined,
+        identifier: undefined,
       },
       {
-        feedItem: { title: 'Title' },
+        item: { title: 'Title' },
         hashes: { titleHash: 'th1' },
-        identifierKey: 'g:|gf:|l:|lf:|e:|t:th1',
+        identifier: 'g:|gf:|l:|lf:|e:|t:th1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'g:gh1',
+        identifier: 'g:gh1',
       },
       {
-        feedItem: { title: 'Title' },
+        item: { title: 'Title' },
         hashes: { titleHash: 'th1' },
-        identifierKey: 'g:|gf:|l:|lf:|e:|t:th1',
+        identifier: 'g:|gf:|l:|lf:|e:|t:th1',
       },
     ]
 
@@ -119,9 +119,9 @@ describe('filterWithIdentifier', () => {
   it('should return empty array when no items have identifier', () => {
     const value: Array<KeyedFeedItem<HashableItem>> = [
       {
-        feedItem: {},
+        item: {},
         hashes: {},
-        identifierKey: undefined,
+        identifier: undefined,
       },
     ]
 
@@ -129,85 +129,85 @@ describe('filterWithIdentifier', () => {
   })
 })
 
-describe('deduplicateByIdentifierKey', () => {
+describe('deduplicateByIdentifier', () => {
   it('should keep first item when duplicates have equal scores', () => {
     const value: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1', content: 'first' },
+        item: { guid: 'g1', content: 'first' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
       {
-        feedItem: { guid: 'g1', content: 'second' },
+        item: { guid: 'g1', content: 'second' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1', content: 'first' },
+        item: { guid: 'g1', content: 'first' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
     ]
 
-    expect(deduplicateByIdentifierKey(value)).toEqual(expected)
+    expect(deduplicateByIdentifier(value)).toEqual(expected)
   })
 
   it('should keep richer item when scores differ', () => {
     const value: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
       {
-        feedItem: { guid: 'g1', link: 'https://example.com' },
+        item: { guid: 'g1', link: 'https://example.com' },
         hashes: { guidHash: 'gh1', linkHash: 'lh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1', link: 'https://example.com' },
+        item: { guid: 'g1', link: 'https://example.com' },
         hashes: { guidHash: 'gh1', linkHash: 'lh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
     ]
 
-    expect(deduplicateByIdentifierKey(value)).toEqual(expected)
+    expect(deduplicateByIdentifier(value)).toEqual(expected)
   })
 
-  it('should keep items with different identifierKeys', () => {
+  it('should keep items with different identifiers', () => {
     const value: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
       {
-        feedItem: { guid: 'g2' },
+        item: { guid: 'g2' },
         hashes: { guidHash: 'gh2' },
-        identifierKey: 'key2',
+        identifier: 'key2',
       },
     ]
     const expected: Array<IdentifiedFeedItem<HashableItem>> = [
       {
-        feedItem: { guid: 'g1' },
+        item: { guid: 'g1' },
         hashes: { guidHash: 'gh1' },
-        identifierKey: 'key1',
+        identifier: 'key1',
       },
       {
-        feedItem: { guid: 'g2' },
+        item: { guid: 'g2' },
         hashes: { guidHash: 'gh2' },
-        identifierKey: 'key2',
+        identifier: 'key2',
       },
     ]
 
-    expect(deduplicateByIdentifierKey(value)).toEqual(expected)
+    expect(deduplicateByIdentifier(value)).toEqual(expected)
   })
 
   it('should return empty array for empty input', () => {
-    expect(deduplicateByIdentifierKey([])).toEqual([])
+    expect(deduplicateByIdentifier([])).toEqual([])
   })
 })

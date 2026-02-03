@@ -21,18 +21,18 @@ export const scoreItem = (hashes: ItemHashes): number => {
   return score
 }
 
-// Step 1: Map each feed item to its computed hashes.
+// Step 1: Map each item to its computed hashes.
 export const computeAllHashes = <TItem extends HashableItem>(
-  feedItems: Array<TItem>,
+  items: Array<TItem>,
 ): Array<HashedFeedItem<TItem>> => {
-  return feedItems.map((feedItem) => ({ feedItem, hashes: computeItemHashes(feedItem) }))
+  return items.map((item) => ({ item, hashes: computeItemHashes(item) }))
 }
 
-// Step 2: Remove items where identifierKey is undefined.
+// Step 2: Remove items where identifier is undefined.
 export const filterWithIdentifier = <TItem>(
   items: Array<KeyedFeedItem<TItem>>,
 ): Array<IdentifiedFeedItem<TItem>> => {
-  return items.filter((item): item is IdentifiedFeedItem<TItem> => item.identifierKey !== undefined)
+  return items.filter((item): item is IdentifiedFeedItem<TItem> => item.identifier !== undefined)
 }
 
 // Best-copy helper: keep the richer item (more hash slots populated).
@@ -49,14 +49,14 @@ const keepBest = <TItem>(
   }
 }
 
-// Step 3: Best-copy-wins dedup by identifierKey.
-export const deduplicateByIdentifierKey = <TItem>(
+// Step 3: Best-copy-wins dedup by identifier.
+export const deduplicateByIdentifier = <TItem>(
   items: Array<IdentifiedFeedItem<TItem>>,
 ): Array<IdentifiedFeedItem<TItem>> => {
   const bestByIdentifier = new Map<string, IdentifiedFeedItem<TItem>>()
 
   for (const item of items) {
-    keepBest(bestByIdentifier, item.identifierKey, item)
+    keepBest(bestByIdentifier, item.identifier, item)
   }
 
   return [...bestByIdentifier.values()]

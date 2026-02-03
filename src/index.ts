@@ -1,8 +1,8 @@
 export { classifyItems } from './classifier.js'
 export {
-  buildIdentifierKeyLadder,
-  computeFloorKey,
+  composeIdentifier,
   computeItemHashes,
+  computeMinRung,
   normalizeEnclosureForHashing,
   normalizeGuidForHashing,
   normalizeGuidFragmentForHashing,
@@ -14,7 +14,7 @@ export {
 export { identityLadder } from './meta.js'
 export {
   computeAllHashes,
-  deduplicateByIdentifierKey,
+  deduplicateByIdentifier,
   filterWithIdentifier,
 } from './pipeline.js'
 export type {

@@ -21,7 +21,7 @@ export type HashMeta = {
   isMatchable: boolean
   isContent: boolean
   normalizeFn: (item: HashableItem) => string | undefined
-  ladderRung?: LadderRung
+  rung?: LadderRung
 }
 
 // Single source of truth for hash key metadata.
@@ -35,7 +35,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: false,
     normalizeFn: (item) => normalizeGuidForHashing(item.guid),
-    ladderRung: 'guidBase',
+    rung: 'guid',
   },
   {
     key: 'guidFragmentHash',
@@ -45,7 +45,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: false,
     isContent: false,
     normalizeFn: (item) => normalizeGuidFragmentForHashing(item.guid),
-    ladderRung: 'guidWithFragment',
+    rung: 'guidFragment',
   },
   {
     key: 'linkHash',
@@ -55,7 +55,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: false,
     normalizeFn: (item) => normalizeLinkForHashing(item.link),
-    ladderRung: 'linkBase',
+    rung: 'link',
   },
   {
     key: 'linkFragmentHash',
@@ -65,7 +65,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: false,
     isContent: false,
     normalizeFn: (item) => normalizeLinkFragmentForHashing(item.link),
-    ladderRung: 'linkWithFragment',
+    rung: 'linkFragment',
   },
   {
     key: 'enclosureHash',
@@ -75,7 +75,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: true,
     normalizeFn: (item) => normalizeEnclosureForHashing(item.enclosures),
-    ladderRung: 'enclosure',
+    rung: 'enclosure',
   },
   {
     key: 'titleHash',
@@ -85,7 +85,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: true,
     normalizeFn: (item) => normalizeTextForHashing(item.title),
-    ladderRung: 'title',
+    rung: 'title',
   },
   {
     key: 'contentHash',
@@ -119,13 +119,13 @@ export type LadderEntry = {
   tag: string
 }
 
-// Derived from hashMeta — entries with ladderRung form the identity ladder.
+// Derived from hashMeta — entries with rung form the identity ladder.
 export const identityLadder: Array<LadderEntry> = hashMeta
-  .filter((meta): meta is HashMeta & { ladderRung: LadderRung } => {
-    return meta.ladderRung !== undefined
+  .filter((meta): meta is HashMeta & { rung: LadderRung } => {
+    return meta.rung !== undefined
   })
   .map((meta) => {
-    return { rung: meta.ladderRung, key: meta.key, tag: meta.tag }
+    return { rung: meta.rung, key: meta.key, tag: meta.tag }
   })
 
 // All hash keys derived from hashMeta.

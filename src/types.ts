@@ -1,11 +1,5 @@
 // Rungs of the identity ladder, strongest → weakest.
-export type LadderRung =
-  | 'guidBase'
-  | 'guidWithFragment'
-  | 'linkBase'
-  | 'linkWithFragment'
-  | 'enclosure'
-  | 'title'
+export type LadderRung = 'guid' | 'guidFragment' | 'link' | 'linkFragment' | 'enclosure' | 'title'
 
 export type HashableItem = {
   guid?: string
@@ -41,17 +35,17 @@ export type MatchableItem = {
 }
 
 export type HashedFeedItem<TItem> = {
-  feedItem: TItem
+  item: TItem
   hashes: ItemHashes
 }
 
 export type KeyedFeedItem<TItem> = HashedFeedItem<TItem> & {
-  identifierKey: string | undefined
+  identifier: string | undefined
 }
 
-// KeyedFeedItem after filterWithIdentifier — identifierKey is guaranteed set.
+// KeyedFeedItem after filterWithIdentifier — identifier is guaranteed set.
 export type IdentifiedFeedItem<TItem> = HashedFeedItem<TItem> & {
-  identifierKey: string
+  identifier: string
 }
 
 export type ChannelProfile = {
@@ -64,13 +58,13 @@ export type MatchResult = {
 }
 
 export type InsertAction<TItem> = {
-  feedItem: TItem
+  item: TItem
   hashes: ItemHashes
   identifierHash: string
 }
 
 export type UpdateAction<TItem> = {
-  feedItem: TItem
+  item: TItem
   hashes: ItemHashes
   identifierHash: string
   existingItemId: string
@@ -78,14 +72,14 @@ export type UpdateAction<TItem> = {
 }
 
 export type ClassifyItemsInput<TItem extends HashableItem = HashableItem> = {
-  feedItems: Array<TItem>
+  newItems: Array<TItem>
   existingItems: Array<MatchableItem>
-  floorKey?: LadderRung
+  minRung?: LadderRung
 }
 
 export type ClassifyItemsResult<TItem> = {
   inserts: Array<InsertAction<TItem>>
   updates: Array<UpdateAction<TItem>>
-  floorKey: LadderRung
-  floorKeyChanged: boolean
+  minRung: LadderRung
+  minRungChanged: boolean
 }

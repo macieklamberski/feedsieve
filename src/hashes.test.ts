@@ -1,44 +1,44 @@
 import { describe, expect, it } from 'bun:test'
-import { buildIdentifierKeyLadder, computeFloorKey, computeItemHashes } from './hashes.js'
+import { composeIdentifier, computeItemHashes, computeMinRung } from './hashes.js'
 import type { HashableItem, ItemHashes } from './types.js'
 
-describe('buildIdentifierKeyLadder', () => {
-  it('should include only guidBase slot at floor=guidBase', () => {
+describe('composeIdentifier', () => {
+  it('should include only guid slot at minRung=guid', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' }
     const expected = 'g:g1'
 
-    expect(buildIdentifierKeyLadder(value, 'guidBase')).toBe(expected)
+    expect(composeIdentifier(value, 'guid')).toBe(expected)
   })
 
-  it('should include guidBase and guidWithFragment at floor=guidWithFragment', () => {
+  it('should include guid and guidFragment at minRung=guidFragment', () => {
     const value = { guidHash: 'g1', guidFragmentHash: 'gf1', linkHash: 'l1' }
     const expected = 'g:g1|gf:gf1'
 
-    expect(buildIdentifierKeyLadder(value, 'guidWithFragment')).toBe(expected)
+    expect(composeIdentifier(value, 'guidFragment')).toBe(expected)
   })
 
-  it('should include up to linkBase at floor=linkBase', () => {
+  it('should include up to link at minRung=link', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' }
     const expected = 'g:g1|gf:|l:l1'
 
-    expect(buildIdentifierKeyLadder(value, 'linkBase')).toBe(expected)
+    expect(composeIdentifier(value, 'link')).toBe(expected)
   })
 
-  it('should include up to linkWithFragment at floor=linkWithFragment', () => {
+  it('should include up to linkFragment at minRung=linkFragment', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', linkFragmentHash: 'lf1' }
     const expected = 'g:g1|gf:|l:l1|lf:lf1'
 
-    expect(buildIdentifierKeyLadder(value, 'linkWithFragment')).toBe(expected)
+    expect(composeIdentifier(value, 'linkFragment')).toBe(expected)
   })
 
-  it('should include up to enclosure at floor=enclosure', () => {
+  it('should include up to enclosure at minRung=enclosure', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e1' }
     const expected = 'g:g1|gf:|l:l1|lf:|e:e1'
 
-    expect(buildIdentifierKeyLadder(value, 'enclosure')).toBe(expected)
+    expect(composeIdentifier(value, 'enclosure')).toBe(expected)
   })
 
-  it('should include all six slots at floor=title', () => {
+  it('should include all six slots at minRung=title', () => {
     const value = {
       guidHash: 'g1',
       guidFragmentHash: 'gf1',
@@ -49,101 +49,95 @@ describe('buildIdentifierKeyLadder', () => {
     }
     const expected = 'g:g1|gf:gf1|l:l1|lf:lf1|e:e1|t:t1'
 
-    expect(buildIdentifierKeyLadder(value, 'title')).toBe(expected)
+    expect(composeIdentifier(value, 'title')).toBe(expected)
   })
 
   it('should produce empty slots for missing hashes', () => {
     const value = { guidHash: 'g1' }
     const expected = 'g:g1|gf:|l:|lf:|e:|t:'
 
-    expect(buildIdentifierKeyLadder(value, 'title')).toBe(expected)
+    expect(composeIdentifier(value, 'title')).toBe(expected)
   })
 
-  it('should produce different keys for items with same link but different titles at floor=title', () => {
+  it('should produce different identifiers for items with same link but different titles at minRung=title', () => {
     const value1 = { linkHash: 'l1', titleHash: 't1' }
     const value2 = { linkHash: 'l1', titleHash: 't2' }
 
-    expect(buildIdentifierKeyLadder(value1, 'title')).not.toBe(
-      buildIdentifierKeyLadder(value2, 'title'),
-    )
+    expect(composeIdentifier(value1, 'title')).not.toBe(composeIdentifier(value2, 'title'))
   })
 
-  it('should produce same keys for items with same link but different titles at floor=linkBase', () => {
+  it('should produce same identifiers for items with same link but different titles at minRung=link', () => {
     const value1 = { linkHash: 'l1', titleHash: 't1' }
     const value2 = { linkHash: 'l1', titleHash: 't2' }
 
-    expect(buildIdentifierKeyLadder(value1, 'linkBase')).toBe(
-      buildIdentifierKeyLadder(value2, 'linkBase'),
-    )
+    expect(composeIdentifier(value1, 'link')).toBe(composeIdentifier(value2, 'link'))
   })
 
-  it('should ignore fragments at floor=linkBase', () => {
+  it('should ignore fragments at minRung=link', () => {
     const value1 = { linkHash: 'l1', linkFragmentHash: 'lf1' }
     const value2 = { linkHash: 'l1', linkFragmentHash: 'lf2' }
 
-    expect(buildIdentifierKeyLadder(value1, 'linkBase')).toBe(
-      buildIdentifierKeyLadder(value2, 'linkBase'),
-    )
+    expect(composeIdentifier(value1, 'link')).toBe(composeIdentifier(value2, 'link'))
   })
 
-  it('should include fragments at floor=linkWithFragment', () => {
+  it('should include fragments at minRung=linkFragment', () => {
     const value1 = { linkHash: 'l1', linkFragmentHash: 'lf1' }
     const value2 = { linkHash: 'l1', linkFragmentHash: 'lf2' }
 
-    expect(buildIdentifierKeyLadder(value1, 'linkWithFragment')).not.toBe(
-      buildIdentifierKeyLadder(value2, 'linkWithFragment'),
+    expect(composeIdentifier(value1, 'linkFragment')).not.toBe(
+      composeIdentifier(value2, 'linkFragment'),
     )
   })
 
   it('should return undefined when no hashes exist in prefix', () => {
     const value: ItemHashes = {}
 
-    expect(buildIdentifierKeyLadder(value, 'title')).toBeUndefined()
+    expect(composeIdentifier(value, 'title')).toBeUndefined()
   })
 
-  it('should return undefined when only hashes below the floor exist', () => {
+  it('should return undefined when only hashes below the min rung exist', () => {
     const value = { titleHash: 't1' }
 
-    expect(buildIdentifierKeyLadder(value, 'linkBase')).toBeUndefined()
+    expect(composeIdentifier(value, 'link')).toBeUndefined()
   })
 })
 
-describe('computeFloorKey', () => {
+describe('computeMinRung', () => {
   it('should pick strongest collision-free rung for new channel', () => {
     const values = [
       { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' },
       { guidHash: 'g2', linkHash: 'l2', titleHash: 't2' },
     ]
 
-    expect(computeFloorKey(values)).toBe('guidBase')
+    expect(computeMinRung(values)).toBe('guid')
   })
 
-  it('should return current floor unchanged when no collisions', () => {
+  it('should return current min rung unchanged when no collisions', () => {
     const values = [
       { guidHash: 'g1', linkHash: 'l1' },
       { guidHash: 'g2', linkHash: 'l2' },
     ]
 
-    expect(computeFloorKey(values, 'linkBase')).toBe('linkBase')
+    expect(computeMinRung(values, 'link')).toBe('link')
   })
 
-  it('should downgrade when current floor has collisions', () => {
-    // Same link → linkBase collides → should move to a weaker rung.
+  it('should downgrade when current min rung has collisions', () => {
+    // Same link → link collides → should move to a weaker rung.
     const values = [
       { linkHash: 'l1', titleHash: 't1' },
       { linkHash: 'l1', titleHash: 't2' },
     ]
 
-    expect(computeFloorKey(values, 'linkBase')).toBe('title')
+    expect(computeMinRung(values, 'link')).toBe('title')
   })
 
-  it('should return guidBase when no collisions at any level', () => {
+  it('should return guid when no collisions at any level', () => {
     const values = [
       { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e1', titleHash: 't1' },
       { guidHash: 'g2', linkHash: 'l2', enclosureHash: 'e2', titleHash: 't2' },
     ]
 
-    expect(computeFloorKey(values)).toBe('guidBase')
+    expect(computeMinRung(values)).toBe('guid')
   })
 
   it('should return title when collisions exist at all levels', () => {
@@ -153,7 +147,7 @@ describe('computeFloorKey', () => {
       { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e1', titleHash: 't1' },
     ]
 
-    expect(computeFloorKey(values)).toBe('title')
+    expect(computeMinRung(values)).toBe('title')
   })
 
   it('should skip to enclosure when guid and link collide', () => {
@@ -162,41 +156,41 @@ describe('computeFloorKey', () => {
       { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e2', titleHash: 't2' },
     ]
 
-    expect(computeFloorKey(values)).toBe('enclosure')
+    expect(computeMinRung(values)).toBe('enclosure')
   })
 
-  it('should handle single-item batch as guidBase', () => {
+  it('should handle single-item batch as guid', () => {
     const values = [{ guidHash: 'g1', linkHash: 'l1' }]
 
-    expect(computeFloorKey(values)).toBe('guidBase')
+    expect(computeMinRung(values)).toBe('guid')
   })
 
   it('should handle empty batch as title', () => {
-    expect(computeFloorKey([])).toBe('title')
+    expect(computeMinRung([])).toBe('title')
   })
 
-  it('should preserve current floor on empty batch', () => {
-    expect(computeFloorKey([], 'guidBase')).toBe('guidBase')
+  it('should preserve current min rung on empty batch', () => {
+    expect(computeMinRung([], 'guid')).toBe('guid')
   })
 
   it('should skip rungs that identify no items', () => {
-    // Link-only items — guidBase produces no keys, should skip to linkBase.
+    // Link-only items — guid produces no identifiers, should skip to link.
     const values = [
       { linkHash: 'l1', titleHash: 't1' },
       { linkHash: 'l2', titleHash: 't2' },
     ]
 
-    expect(computeFloorKey(values)).toBe('linkBase')
+    expect(computeMinRung(values)).toBe('link')
   })
 
-  it('should never upgrade above current floor', () => {
-    // No collisions at guidBase, but current floor is title — should stay at title.
+  it('should never upgrade above current min rung', () => {
+    // No collisions at guid, but current min rung is title — should stay at title.
     const values = [
       { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' },
       { guidHash: 'g2', linkHash: 'l2', titleHash: 't2' },
     ]
 
-    expect(computeFloorKey(values, 'title')).toBe('title')
+    expect(computeMinRung(values, 'title')).toBe('title')
   })
 })
 
