@@ -4,7 +4,6 @@ import {
   computeBatchLinkUniqueness,
   computeChannelProfile,
   findCandidatesForItem,
-  hasItemChanged,
   isLinkOnly,
   selectMatch,
 } from './matching.js'
@@ -24,88 +23,6 @@ const makeItem = (overrides: Partial<MatchableItem> = {}): MatchableItem => {
     ...overrides,
   }
 }
-
-describe('hasItemChanged', () => {
-  it('should return false when all hashes match', () => {
-    const existing = makeItem({
-      titleHash: 'title-1',
-      summaryHash: 'summary-1',
-      contentHash: 'content-1',
-      enclosureHash: 'enclosure-1',
-    })
-    const incoming: ItemHashes = {
-      titleHash: 'title-1',
-      summaryHash: 'summary-1',
-      contentHash: 'content-1',
-      enclosureHash: 'enclosure-1',
-    }
-
-    expect(hasItemChanged(existing, incoming)).toBe(false)
-  })
-
-  it('should return false when all hashes are null/undefined', () => {
-    const existing = makeItem()
-    const incoming: ItemHashes = {}
-
-    expect(hasItemChanged(existing, incoming)).toBe(false)
-  })
-
-  it('should return true when titleHash differs', () => {
-    const existing = makeItem({ titleHash: 'title-1' })
-    const incoming: ItemHashes = { titleHash: 'title-2' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should return true when summaryHash differs', () => {
-    const existing = makeItem({ summaryHash: 'summary-1' })
-    const incoming: ItemHashes = { summaryHash: 'summary-2' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should return true when contentHash differs', () => {
-    const existing = makeItem({ contentHash: 'content-1' })
-    const incoming: ItemHashes = { contentHash: 'content-2' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should return true when enclosureHash differs', () => {
-    const existing = makeItem({ enclosureHash: 'enclosure-1' })
-    const incoming: ItemHashes = { enclosureHash: 'enclosure-2' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should return true when existing has value and incoming has undefined', () => {
-    const existing = makeItem({ titleHash: 'title-1' })
-    const incoming: ItemHashes = {}
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should return true when existing has null and incoming has value', () => {
-    const existing = makeItem({ contentHash: null })
-    const incoming: ItemHashes = { contentHash: 'content-1' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should return true when multiple hashes differ', () => {
-    const existing = makeItem({ titleHash: 'title-1', contentHash: 'content-1' })
-    const incoming: ItemHashes = { titleHash: 'title-2', contentHash: 'content-2' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(true)
-  })
-
-  it('should ignore non-content hashes like guidHash and linkHash', () => {
-    const existing = makeItem({ guidHash: 'guid-1', linkHash: 'link-1' })
-    const incoming: ItemHashes = { guidHash: 'guid-2', linkHash: 'link-2' }
-
-    expect(hasItemChanged(existing, incoming)).toBe(false)
-  })
-})
 
 describe('isLinkOnly', () => {
   it('should return true when only linkHash is present', () => {

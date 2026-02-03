@@ -11,16 +11,6 @@ import type {
   TraceEvent,
 } from './types.js'
 
-// Detect meaningful content changes between existing and incoming item.
-// Compares all isContent hashes (title, summary, content, enclosure).
-// Uses loose inequality (!=) so null and undefined are treated as equal,
-// preventing false positives from DB null vs pipeline undefined.
-export const hasItemChanged = (existing: MatchableItem, incomingHashes: ItemHashes): boolean =>
-  hashMeta
-    .filter((meta) => meta.isContent)
-    /* biome-ignore lint/suspicious/noDoubleEquals: Intentional — null == undefined. */
-    .some((meta) => existing[meta.key] != incomingHashes[meta.key])
-
 // Returns true when link is the item's only strong identifier
 // (no guid, no enclosure). Link-only items always get link matching
 // even on low-uniqueness channels.
