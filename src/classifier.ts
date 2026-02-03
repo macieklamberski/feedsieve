@@ -1,5 +1,5 @@
 import { contentChangeGate, enclosureConflictGate } from './gates.js'
-import { composeIdentifier, computeMinRung } from './hashes.js'
+import { composeIdentifier, resolveIdentityDepth } from './hashes.js'
 import { generateHash, isDefined } from './helpers.js'
 import { computeChannelProfile, findCandidatesForItem, selectMatch } from './matching.js'
 import { hashKeys } from './meta.js'
@@ -30,11 +30,11 @@ const toItemHashes = (item: MatchableItem): ItemHashes => {
 }
 
 // Pure function: classify new items against existing items into inserts/updates.
-// Uses ladder-based identity with auto-computed min rung when not provided.
+// Uses level-based identity with auto-computed depth when not provided.
 export const classifyItems = <TItem extends HashableItem>(
   input: ClassifyItemsInput<TItem>,
 ): ClassifyItemsResult<TItem> => {
-  const { newItems, existingItems, minRung: inputMinRung, policy } = input
+  const { newItems, existingItems, identityDepth: inputDepth, policy } = input
   const trace = policy?.trace
 
   const candidateGates = [enclosureConflictGate, ...(policy?.candidateGates ?? [])]
@@ -89,11 +89,11 @@ export const classifyItems = <TItem extends HashableItem>(
     .filter((item) => !matchedExistingIds.has(item.id))
     .map(toItemHashes)
 
-  // Dedup by max-rung identifier so identity-equivalent items (literal
+  // Dedup by max-depth identifier so identity-equivalent items (literal
   // duplicates, or same item with slightly different hash coverage) don't
-  // cause false downgrades. Items with no ladder identity are skipped.
+  // cause false downgrades. Items with no level identity are skipped.
   const seenKeys = new Set<string>()
-  const rungHashes = [...incomingHashes, ...unmatchedExistingHashes].filter((hashes) => {
+  const depthHashes = [...incomingHashes, ...unmatchedExistingHashes].filter((hashes) => {
     const maxKey = composeIdentifier(hashes, 'title')
 
     if (!maxKey) {
@@ -108,15 +108,15 @@ export const classifyItems = <TItem extends HashableItem>(
     return true
   })
 
-  // Resolve min rung: validate/downgrade if provided, compute from data otherwise.
-  const resolvedMinRung = computeMinRung(rungHashes, inputMinRung)
-  const minRungChanged = inputMinRung !== undefined && resolvedMinRung !== inputMinRung
-  trace?.({ kind: 'rung.resolved', minRung: resolvedMinRung, changed: minRungChanged })
+  // Resolve identity depth: validate/downgrade if provided, compute from data otherwise.
+  const resolvedDepth = resolveIdentityDepth(depthHashes, inputDepth)
+  const depthChanged = inputDepth !== undefined && resolvedDepth !== inputDepth
+  trace?.({ kind: 'identityDepth.resolved', identityDepth: resolvedDepth, changed: depthChanged })
 
-  // Build keyed items using ladder identity at the resolved min rung.
+  // Build keyed items using level identity at the resolved depth.
   const keyed = hashedItems.map((item) => ({
     ...item,
-    identifier: composeIdentifier(item.hashes, resolvedMinRung),
+    identifier: composeIdentifier(item.hashes, resolvedDepth),
   }))
   const identified = filterWithIdentifier(keyed)
   const deduplicated = deduplicateByIdentifier(identified)
@@ -130,23 +130,22 @@ export const classifyItems = <TItem extends HashableItem>(
     const candidates = findCandidatesForItem(item.hashes, existingItems)
 
     // Reject candidates whose identifier differs from the incoming item.
-    // This prevents matching (and merging) items that the ladder considers distinct.
-    const rungFilteredCandidates = candidates.filter(
-      (candidate) =>
-        composeIdentifier(toItemHashes(candidate), resolvedMinRung) === item.identifier,
+    // This prevents matching (and merging) items that the levels consider distinct.
+    const depthFilteredCandidates = candidates.filter(
+      (candidate) => composeIdentifier(toItemHashes(candidate), resolvedDepth) === item.identifier,
     )
 
-    if (rungFilteredCandidates.length < candidates.length) {
+    if (depthFilteredCandidates.length < candidates.length) {
       trace?.({
-        kind: 'candidates.rungFiltered',
+        kind: 'candidates.depthFiltered',
         before: candidates.length,
-        after: rungFilteredCandidates.length,
+        after: depthFilteredCandidates.length,
       })
     }
 
     const result = selectMatch({
       hashes: item.hashes,
-      candidates: rungFilteredCandidates,
+      candidates: depthFilteredCandidates,
       linkUniquenessRate: profile.linkUniquenessRate,
       candidateGates,
       trace,
@@ -184,5 +183,5 @@ export const classifyItems = <TItem extends HashableItem>(
     }
   }
 
-  return { inserts, updates, minRung: resolvedMinRung, minRungChanged }
+  return { inserts, updates, identityDepth: resolvedDepth, identityDepthChanged: depthChanged }
 }

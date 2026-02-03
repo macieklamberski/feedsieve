@@ -7,7 +7,7 @@ import {
   normalizeLinkFragmentForHashing,
   normalizeTextForHashing,
 } from './normalize.js'
-import type { HashableItem, ItemHashes, LadderRung } from './types.js'
+import type { HashableItem, IdentityDepth, ItemHashes } from './types.js'
 
 // Hash key from ItemHashes.
 export type HashKey = keyof ItemHashes
@@ -21,11 +21,11 @@ export type HashMeta = {
   isMatchable: boolean
   isContent: boolean
   normalizeFn: (item: HashableItem) => string | undefined
-  rung?: LadderRung
+  depth?: IdentityDepth
 }
 
 // Single source of truth for hash key metadata.
-// Order determines identityLadder derivation order.
+// Order determines identityLevels derivation order.
 export const hashMeta: Array<HashMeta> = [
   {
     key: 'guidHash',
@@ -35,7 +35,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: false,
     normalizeFn: (item) => normalizeGuidForHashing(item.guid),
-    rung: 'guid',
+    depth: 'guid',
   },
   {
     key: 'guidFragmentHash',
@@ -45,7 +45,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: false,
     isContent: false,
     normalizeFn: (item) => normalizeGuidFragmentForHashing(item.guid),
-    rung: 'guidFragment',
+    depth: 'guidFragment',
   },
   {
     key: 'linkHash',
@@ -55,7 +55,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: false,
     normalizeFn: (item) => normalizeLinkForHashing(item.link),
-    rung: 'link',
+    depth: 'link',
   },
   {
     key: 'linkFragmentHash',
@@ -65,7 +65,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: false,
     isContent: false,
     normalizeFn: (item) => normalizeLinkFragmentForHashing(item.link),
-    rung: 'linkFragment',
+    depth: 'linkFragment',
   },
   {
     key: 'enclosureHash',
@@ -75,7 +75,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: true,
     normalizeFn: (item) => normalizeEnclosureForHashing(item.enclosures),
-    rung: 'enclosure',
+    depth: 'enclosure',
   },
   {
     key: 'titleHash',
@@ -85,7 +85,7 @@ export const hashMeta: Array<HashMeta> = [
     isMatchable: true,
     isContent: true,
     normalizeFn: (item) => normalizeTextForHashing(item.title),
-    rung: 'title',
+    depth: 'title',
   },
   {
     key: 'contentHash',
@@ -112,20 +112,20 @@ export const hasStrongHash = (hashes: ItemHashes): boolean => {
   return hashMeta.some((meta) => meta.isStrongHash && hashes[meta.key])
 }
 
-// Ladder rungs ordered strongest → weakest. Each rung maps to a HashKey and tag.
-export type LadderEntry = {
-  rung: LadderRung
+// Identity levels ordered strongest → weakest. Each level maps to a HashKey and tag.
+export type IdentityLevel = {
+  depth: IdentityDepth
   key: HashKey
   tag: string
 }
 
-// Derived from hashMeta — entries with rung form the identity ladder.
-export const identityLadder: Array<LadderEntry> = hashMeta
-  .filter((meta): meta is HashMeta & { rung: LadderRung } => {
-    return meta.rung !== undefined
+// Derived from hashMeta — entries with depth form the identity levels.
+export const identityLevels: Array<IdentityLevel> = hashMeta
+  .filter((meta): meta is HashMeta & { depth: IdentityDepth } => {
+    return meta.depth !== undefined
   })
   .map((meta) => {
-    return { rung: meta.rung, key: meta.key, tag: meta.tag }
+    return { depth: meta.depth, key: meta.key, tag: meta.tag }
   })
 
 // All hash keys derived from hashMeta.

@@ -1,44 +1,44 @@
 import { describe, expect, it } from 'bun:test'
-import { composeIdentifier, computeItemHashes, computeMinRung } from './hashes.js'
+import { composeIdentifier, computeItemHashes, resolveIdentityDepth } from './hashes.js'
 import type { HashableItem, ItemHashes } from './types.js'
 
 describe('composeIdentifier', () => {
-  it('should include only guid slot at minRung=guid', () => {
+  it('should include only guid slot at depth=guid', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' }
     const expected = 'g:g1'
 
     expect(composeIdentifier(value, 'guid')).toBe(expected)
   })
 
-  it('should include guid and guidFragment at minRung=guidFragment', () => {
+  it('should include guid and guidFragment at depth=guidFragment', () => {
     const value = { guidHash: 'g1', guidFragmentHash: 'gf1', linkHash: 'l1' }
     const expected = 'g:g1|gf:gf1'
 
     expect(composeIdentifier(value, 'guidFragment')).toBe(expected)
   })
 
-  it('should include up to link at minRung=link', () => {
+  it('should include up to link at depth=link', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' }
     const expected = 'g:g1|gf:|l:l1'
 
     expect(composeIdentifier(value, 'link')).toBe(expected)
   })
 
-  it('should include up to linkFragment at minRung=linkFragment', () => {
+  it('should include up to linkFragment at depth=linkFragment', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', linkFragmentHash: 'lf1' }
     const expected = 'g:g1|gf:|l:l1|lf:lf1'
 
     expect(composeIdentifier(value, 'linkFragment')).toBe(expected)
   })
 
-  it('should include up to enclosure at minRung=enclosure', () => {
+  it('should include up to enclosure at depth=enclosure', () => {
     const value = { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e1' }
     const expected = 'g:g1|gf:|l:l1|lf:|e:e1'
 
     expect(composeIdentifier(value, 'enclosure')).toBe(expected)
   })
 
-  it('should include all six slots at minRung=title', () => {
+  it('should include all six slots at depth=title', () => {
     const value = {
       guidHash: 'g1',
       guidFragmentHash: 'gf1',
@@ -59,28 +59,28 @@ describe('composeIdentifier', () => {
     expect(composeIdentifier(value, 'title')).toBe(expected)
   })
 
-  it('should produce different identifiers for items with same link but different titles at minRung=title', () => {
+  it('should produce different identifiers for items with same link but different titles at depth=title', () => {
     const value1 = { linkHash: 'l1', titleHash: 't1' }
     const value2 = { linkHash: 'l1', titleHash: 't2' }
 
     expect(composeIdentifier(value1, 'title')).not.toBe(composeIdentifier(value2, 'title'))
   })
 
-  it('should produce same identifiers for items with same link but different titles at minRung=link', () => {
+  it('should produce same identifiers for items with same link but different titles at depth=link', () => {
     const value1 = { linkHash: 'l1', titleHash: 't1' }
     const value2 = { linkHash: 'l1', titleHash: 't2' }
 
     expect(composeIdentifier(value1, 'link')).toBe(composeIdentifier(value2, 'link'))
   })
 
-  it('should ignore fragments at minRung=link', () => {
+  it('should ignore fragments at depth=link', () => {
     const value1 = { linkHash: 'l1', linkFragmentHash: 'lf1' }
     const value2 = { linkHash: 'l1', linkFragmentHash: 'lf2' }
 
     expect(composeIdentifier(value1, 'link')).toBe(composeIdentifier(value2, 'link'))
   })
 
-  it('should include fragments at minRung=linkFragment', () => {
+  it('should include fragments at depth=linkFragment', () => {
     const value1 = { linkHash: 'l1', linkFragmentHash: 'lf1' }
     const value2 = { linkHash: 'l1', linkFragmentHash: 'lf2' }
 
@@ -102,14 +102,14 @@ describe('composeIdentifier', () => {
   })
 })
 
-describe('computeMinRung', () => {
+describe('resolveIdentityDepth', () => {
   it('should pick strongest collision-free rung for new channel', () => {
     const values = [
       { guidHash: 'g1', linkHash: 'l1', titleHash: 't1' },
       { guidHash: 'g2', linkHash: 'l2', titleHash: 't2' },
     ]
 
-    expect(computeMinRung(values)).toBe('guid')
+    expect(resolveIdentityDepth(values)).toBe('guid')
   })
 
   it('should return current min rung unchanged when no collisions', () => {
@@ -118,7 +118,7 @@ describe('computeMinRung', () => {
       { guidHash: 'g2', linkHash: 'l2' },
     ]
 
-    expect(computeMinRung(values, 'link')).toBe('link')
+    expect(resolveIdentityDepth(values, 'link')).toBe('link')
   })
 
   it('should downgrade when current min rung has collisions', () => {
@@ -128,7 +128,7 @@ describe('computeMinRung', () => {
       { linkHash: 'l1', titleHash: 't2' },
     ]
 
-    expect(computeMinRung(values, 'link')).toBe('title')
+    expect(resolveIdentityDepth(values, 'link')).toBe('title')
   })
 
   it('should return guid when no collisions at any level', () => {
@@ -137,7 +137,7 @@ describe('computeMinRung', () => {
       { guidHash: 'g2', linkHash: 'l2', enclosureHash: 'e2', titleHash: 't2' },
     ]
 
-    expect(computeMinRung(values)).toBe('guid')
+    expect(resolveIdentityDepth(values)).toBe('guid')
   })
 
   it('should return title when collisions exist at all levels', () => {
@@ -147,7 +147,7 @@ describe('computeMinRung', () => {
       { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e1', titleHash: 't1' },
     ]
 
-    expect(computeMinRung(values)).toBe('title')
+    expect(resolveIdentityDepth(values)).toBe('title')
   })
 
   it('should skip to enclosure when guid and link collide', () => {
@@ -156,21 +156,21 @@ describe('computeMinRung', () => {
       { guidHash: 'g1', linkHash: 'l1', enclosureHash: 'e2', titleHash: 't2' },
     ]
 
-    expect(computeMinRung(values)).toBe('enclosure')
+    expect(resolveIdentityDepth(values)).toBe('enclosure')
   })
 
   it('should handle single-item batch as guid', () => {
     const values = [{ guidHash: 'g1', linkHash: 'l1' }]
 
-    expect(computeMinRung(values)).toBe('guid')
+    expect(resolveIdentityDepth(values)).toBe('guid')
   })
 
   it('should handle empty batch as title', () => {
-    expect(computeMinRung([])).toBe('title')
+    expect(resolveIdentityDepth([])).toBe('title')
   })
 
   it('should preserve current min rung on empty batch', () => {
-    expect(computeMinRung([], 'guid')).toBe('guid')
+    expect(resolveIdentityDepth([], 'guid')).toBe('guid')
   })
 
   it('should skip rungs that identify no items', () => {
@@ -180,7 +180,7 @@ describe('computeMinRung', () => {
       { linkHash: 'l2', titleHash: 't2' },
     ]
 
-    expect(computeMinRung(values)).toBe('link')
+    expect(resolveIdentityDepth(values)).toBe('link')
   })
 
   it('should never upgrade above current min rung', () => {
@@ -190,7 +190,7 @@ describe('computeMinRung', () => {
       { guidHash: 'g2', linkHash: 'l2', titleHash: 't2' },
     ]
 
-    expect(computeMinRung(values, 'title')).toBe('title')
+    expect(resolveIdentityDepth(values, 'title')).toBe('title')
   })
 })
 

@@ -3,7 +3,6 @@ export { contentChangeGate, enclosureConflictGate } from './gates.js'
 export {
   composeIdentifier,
   computeItemHashes,
-  computeMinRung,
   normalizeEnclosureForHashing,
   normalizeGuidForHashing,
   normalizeGuidFragmentForHashing,
@@ -11,8 +10,9 @@ export {
   normalizeLinkForHashing,
   normalizeLinkFragmentForHashing,
   normalizeTextForHashing,
+  resolveIdentityDepth,
 } from './hashes.js'
-export { identityLadder } from './meta.js'
+export { identityLevels } from './meta.js'
 export {
   computeAllHashes,
   deduplicateByIdentifier,
@@ -27,10 +27,10 @@ export type {
   ClassifyPolicy,
   HashableItem,
   HashedFeedItem,
+  IdentityDepth,
   InsertAction,
   ItemHashes,
   KeyedFeedItem,
-  LadderRung,
   MatchableItem,
   MatchSource,
   TraceEvent,
@@ -38,4 +38,4 @@ export type {
   UpdateGate,
   UpdateGateContext,
 } from './types.js'
-export { ladderRungs } from './types.js'
+export { identityDepths } from './types.js'

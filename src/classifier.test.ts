@@ -6,7 +6,7 @@ import type {
   ClassifyItemsInput,
   ClassifyItemsResult,
   HashableItem,
-  LadderRung,
+  IdentityDepth,
   MatchableItem,
   TraceEvent,
   UpdateGate,
@@ -53,8 +53,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -87,8 +87,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -132,8 +132,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -154,8 +154,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -175,8 +175,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -205,8 +205,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -243,7 +243,7 @@ describe('classifyItems', () => {
         })
       }
 
-      expect(forward.minRung).toBe(reversed.minRung)
+      expect(forward.identityDepth).toBe(reversed.identityDepth)
       expect(sortByHash(forward.inserts)).toEqual(sortByHash(reversed.inserts))
       expect(sortByHash(forward.updates)).toEqual(sortByHash(reversed.updates))
     })
@@ -263,8 +263,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -278,8 +278,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -293,8 +293,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -322,19 +322,19 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should throw when minRung is invalid at runtime', () => {
+    it('should throw when identityDepth is invalid at runtime', () => {
       const value: ClassifyItemsInput = {
         newItems: [{ guid: 'guid-1', title: 'Post' }],
         existingItems: [],
         // @ts-expect-error: This is for testing purposes.
-        minRung: 'not-a-rung',
+        identityDepth: 'not-a-rung',
       }
       const throwing = () => classifyItems(value)
 
@@ -360,8 +360,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -372,7 +372,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItem, feedItem],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -383,8 +383,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -405,8 +405,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -428,8 +428,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -478,8 +478,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -507,8 +507,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -541,8 +541,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -573,8 +573,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -596,8 +596,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -605,13 +605,13 @@ describe('classifyItems', () => {
   })
 
   describe('floor computation', () => {
-    it('should detect minRungChanged when floor is downgraded', () => {
+    it('should detect identityDepthChanged when floor is downgraded', () => {
       const feedItemA = { link: 'https://example.com/shared', title: 'Post A' }
       const feedItemB = { link: 'https://example.com/shared', title: 'Post B' }
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -627,20 +627,20 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should not set minRungChanged when floor is stable', () => {
+    it('should not set identityDepthChanged when floor is stable', () => {
       const feedItem1 = { guid: 'guid-1', title: 'Post 1' }
       const feedItem2 = { guid: 'guid-2', title: 'Post 2' }
       const value: ClassifyItemsInput = {
         newItems: [feedItem1, feedItem2],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -656,8 +656,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -669,7 +669,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -685,8 +685,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       const result = classifyItems(value)
@@ -711,7 +711,7 @@ describe('classifyItems', () => {
             title: 'Article B',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -722,8 +722,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -740,7 +740,7 @@ describe('classifyItems', () => {
             title: 'Old Article',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -751,8 +751,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -779,8 +779,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -792,7 +792,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -808,8 +808,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'linkFragment',
-        minRungChanged: true,
+        identityDepth: 'linkFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -821,7 +821,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -837,8 +837,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guidFragment',
-        minRungChanged: true,
+        identityDepth: 'guidFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -858,7 +858,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -874,8 +874,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: true,
+        identityDepth: 'enclosure',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -895,7 +895,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -911,20 +911,20 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: true,
+        identityDepth: 'enclosure',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should not upgrade floor when minRung is already deeper', () => {
+    it('should not upgrade floor when identityDepth is already deeper', () => {
       const feedItem1 = { guid: 'guid-1', link: 'https://example.com/post-1', title: 'Post 1' }
       const feedItem2 = { guid: 'guid-2', link: 'https://example.com/post-2', title: 'Post 2' }
       const value: ClassifyItemsInput = {
         newItems: [feedItem1, feedItem2],
         existingItems: [],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -940,8 +940,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -953,7 +953,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -969,30 +969,30 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: true,
+        identityDepth: 'link',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should not change minRung when feed and existing are both empty', () => {
+    it('should not change identityDepth when feed and existing are both empty', () => {
       const value: ClassifyItemsInput = {
         newItems: [],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should not change minRung when only unidentifiable items arrive with existing history', () => {
+    it('should not change identityDepth when only unidentifiable items arrive with existing history', () => {
       const value: ClassifyItemsInput = {
         newItems: [{ content: 'Only content, no identifiable fields' }],
         existingItems: [
@@ -1002,19 +1002,19 @@ describe('classifyItems', () => {
             title: 'Post 1',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should downgrade minRung when feed is empty but existing items collide', () => {
+    it('should downgrade identityDepth when feed is empty but existing items collide', () => {
       const value: ClassifyItemsInput = {
         newItems: [],
         existingItems: [
@@ -1029,13 +1029,13 @@ describe('classifyItems', () => {
             title: 'Title B',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1048,14 +1048,14 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItem1, feedItem2, feedItem3],
         existingItems: [],
-        minRung: 'link',
+        identityDepth: 'link',
       }
 
       const result = classifyItems(value)
       const identifierHashes = result.inserts.map((item) => item.identifierHash)
 
-      expect(result.minRung).toBe('linkFragment')
-      expect(result.minRungChanged).toBe(true)
+      expect(result.identityDepth).toBe('linkFragment')
+      expect(result.identityDepthChanged).toBe(true)
       expect(identifierHashes.length).toBe(3)
       expect(new Set(identifierHashes).size).toBe(3)
     })
@@ -1066,7 +1066,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1082,8 +1082,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: true,
+        identityDepth: 'link',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1101,7 +1101,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1117,8 +1117,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: true,
+        identityDepth: 'enclosure',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1130,7 +1130,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'enclosure',
+        identityDepth: 'enclosure',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1146,8 +1146,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1159,7 +1159,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1175,8 +1175,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1196,7 +1196,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1212,8 +1212,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: true,
+        identityDepth: 'link',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1233,7 +1233,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1249,8 +1249,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1270,7 +1270,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1286,8 +1286,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'linkFragment',
-        minRungChanged: true,
+        identityDepth: 'linkFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1307,7 +1307,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1323,14 +1323,14 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guidFragment',
-        minRungChanged: true,
+        identityDepth: 'guidFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should auto-compute floor from existing items when feed is empty and no minRung provided', () => {
+    it('should auto-compute floor from existing items when feed is empty and no identityDepth provided', () => {
       const value: ClassifyItemsInput = {
         newItems: [],
         existingItems: [
@@ -1349,8 +1349,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1381,8 +1381,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1421,8 +1421,8 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1454,8 +1454,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1482,8 +1482,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'linkFragment',
-        minRungChanged: false,
+        identityDepth: 'linkFragment',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1505,7 +1505,7 @@ describe('classifyItems', () => {
             title: 'Article B',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1516,8 +1516,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1539,7 +1539,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -1552,8 +1552,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1581,7 +1581,7 @@ describe('classifyItems', () => {
             title: 'Episode 2',
           }),
         ],
-        minRung: 'enclosure',
+        identityDepth: 'enclosure',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -1594,8 +1594,8 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1612,7 +1612,7 @@ describe('classifyItems', () => {
             title: 'Old Title',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1623,8 +1623,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1641,7 +1641,7 @@ describe('classifyItems', () => {
             title: 'Post Title',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1652,8 +1652,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'linkFragment',
-        minRungChanged: true,
+        identityDepth: 'linkFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1670,7 +1670,7 @@ describe('classifyItems', () => {
             title: 'Post Title',
           }),
         ],
-        minRung: 'linkFragment',
+        identityDepth: 'linkFragment',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1681,8 +1681,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'linkFragment',
-        minRungChanged: false,
+        identityDepth: 'linkFragment',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1714,8 +1714,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1732,7 +1732,7 @@ describe('classifyItems', () => {
             title: 'Old Title',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1743,8 +1743,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1766,7 +1766,7 @@ describe('classifyItems', () => {
             title: 'Original',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1777,8 +1777,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: true,
+        identityDepth: 'enclosure',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1796,7 +1796,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -1809,8 +1809,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1832,7 +1832,7 @@ describe('classifyItems', () => {
             title: 'Article B',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1843,14 +1843,14 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should insert when guid match has enclosure conflict even without minRung', () => {
+    it('should insert when guid match has enclosure conflict even without identityDepth', () => {
       const feedItem = {
         guid: 'guid-1',
         enclosures: [{ url: 'https://example.com/new.mp3' }],
@@ -1876,8 +1876,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1905,7 +1905,7 @@ describe('classifyItems', () => {
             content: 'Old C',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -1918,8 +1918,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1948,8 +1948,8 @@ describe('classifyItems', () => {
             identifierSource: 'title',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1972,7 +1972,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -1983,8 +1983,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2007,7 +2007,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -2018,8 +2018,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2041,7 +2041,7 @@ describe('classifyItems', () => {
             title: 'Episode 1',
           }),
         ],
-        minRung: 'enclosure',
+        identityDepth: 'enclosure',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -2052,8 +2052,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2093,8 +2093,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2126,8 +2126,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2164,8 +2164,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2211,8 +2211,8 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2248,8 +2248,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2266,7 +2266,7 @@ describe('classifyItems', () => {
             title: 'Original Title',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -2277,8 +2277,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2333,8 +2333,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2395,8 +2395,8 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2439,8 +2439,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2495,8 +2495,8 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2524,7 +2524,7 @@ describe('classifyItems', () => {
             title: 'B',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -2535,8 +2535,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2544,7 +2544,7 @@ describe('classifyItems', () => {
   })
 
   describe('update scenarios', () => {
-    it('should update via link on high-uniqueness channel without explicit minRung', () => {
+    it('should update via link on high-uniqueness channel without explicit identityDepth', () => {
       const feedItem = {
         link: 'https://example.com/post',
         title: 'Post Title',
@@ -2572,8 +2572,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2607,8 +2607,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2641,8 +2641,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2669,7 +2669,7 @@ describe('classifyItems', () => {
             title: 'Other Article',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -2682,8 +2682,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2716,7 +2716,7 @@ describe('classifyItems', () => {
             content: 'Old B',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -2736,14 +2736,14 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should auto-compute title floor and update correct hub item without explicit minRung', () => {
+    it('should auto-compute title floor and update correct hub item without explicit identityDepth', () => {
       const feedItem = {
         link: 'https://example.com/hub',
         title: 'Article B',
@@ -2777,8 +2777,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2809,7 +2809,7 @@ describe('classifyItems', () => {
             content: 'Old notes',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -2822,8 +2822,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'enclosure',
-        minRungChanged: true,
+        identityDepth: 'enclosure',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2851,7 +2851,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -2864,8 +2864,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guidFragment',
-        minRungChanged: true,
+        identityDepth: 'guidFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2898,7 +2898,7 @@ describe('classifyItems', () => {
           }),
           ...filler,
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -2911,8 +2911,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'linkFragment',
-        minRungChanged: true,
+        identityDepth: 'linkFragment',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2943,7 +2943,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -2956,8 +2956,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'link',
-        minRungChanged: true,
+        identityDepth: 'link',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2991,8 +2991,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3022,7 +3022,7 @@ describe('classifyItems', () => {
             title: 'Ep 2',
           }),
         ],
-        minRung: 'enclosure',
+        identityDepth: 'enclosure',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -3035,20 +3035,20 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should keep minRung guidFragment when guid fragments resolve collision', () => {
+    it('should keep identityDepth guidFragment when guid fragments resolve collision', () => {
       const feedItemA = { guid: 'https://example.com/post#v1', title: 'Version 1' }
       const feedItemB = { guid: 'https://example.com/post#v2', title: 'Version 2' }
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'guidFragment',
+        identityDepth: 'guidFragment',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -3064,8 +3064,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guidFragment',
-        minRungChanged: false,
+        identityDepth: 'guidFragment',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3085,7 +3085,7 @@ describe('classifyItems', () => {
       const value: ClassifyItemsInput = {
         newItems: [feedItemA, feedItemB],
         existingItems: [],
-        minRung: 'enclosure',
+        identityDepth: 'enclosure',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -3101,8 +3101,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3119,13 +3119,13 @@ describe('classifyItems', () => {
             title: 'Same Title',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'link',
-        minRungChanged: false,
+        identityDepth: 'link',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3143,7 +3143,7 @@ describe('classifyItems', () => {
             title: 'Old Title',
           }),
         ],
-        minRung: 'guid',
+        identityDepth: 'guid',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
@@ -3156,8 +3156,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3180,7 +3180,7 @@ describe('classifyItems', () => {
             content: 'Old content',
           }),
         ],
-        minRung: 'link',
+        identityDepth: 'link',
       }
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [
@@ -3199,8 +3199,8 @@ describe('classifyItems', () => {
             identifierSource: 'link',
           },
         ],
-        minRung: 'title',
-        minRungChanged: true,
+        identityDepth: 'title',
+        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3216,8 +3216,8 @@ describe('classifyItems', () => {
       const expected: ClassifyItemsResult<HashableItem> = {
         inserts: [],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3259,8 +3259,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3287,8 +3287,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3320,8 +3320,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3356,8 +3356,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3392,8 +3392,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3421,8 +3421,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3452,8 +3452,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3483,8 +3483,8 @@ describe('classifyItems', () => {
             identifierSource: 'guid',
           },
         ],
-        minRung: 'guid',
-        minRungChanged: false,
+        identityDepth: 'guid',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3524,8 +3524,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'title',
-        minRungChanged: false,
+        identityDepth: 'title',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3565,8 +3565,8 @@ describe('classifyItems', () => {
           },
         ],
         updates: [],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3600,8 +3600,8 @@ describe('classifyItems', () => {
             identifierSource: 'enclosure',
           },
         ],
-        minRung: 'enclosure',
-        minRungChanged: false,
+        identityDepth: 'enclosure',
+        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3615,7 +3615,7 @@ describe('classifyItems', () => {
         existingItems: [],
       })
 
-      expect(scan1.minRung).toBe('link')
+      expect(scan1.identityDepth).toBe('link')
       expect(scan1.inserts).toHaveLength(1)
 
       const scan2 = classifyItems({
@@ -3630,11 +3630,11 @@ describe('classifyItems', () => {
             title: 'Article A',
           }),
         ],
-        minRung: scan1.minRung,
+        identityDepth: scan1.identityDepth,
       })
 
-      expect(scan2.minRung).toBe('title')
-      expect(scan2.minRungChanged).toBe(true)
+      expect(scan2.identityDepth).toBe('title')
+      expect(scan2.identityDepthChanged).toBe(true)
       expect(scan2.inserts).toHaveLength(1)
       expect(scan2.updates).toHaveLength(1)
     })
@@ -3654,11 +3654,11 @@ describe('classifyItems', () => {
             title: 'Article B',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       })
 
-      expect(scan3.minRung).toBe('title')
-      expect(scan3.minRungChanged).toBe(false)
+      expect(scan3.identityDepth).toBe('title')
+      expect(scan3.identityDepthChanged).toBe(false)
     })
 
     it('should downgrade floor when guid is recycled in later scan', () => {
@@ -3670,7 +3670,7 @@ describe('classifyItems', () => {
         existingItems: [],
       })
 
-      expect(scan1.minRung).toBe('guid')
+      expect(scan1.identityDepth).toBe('guid')
       expect(scan1.inserts).toHaveLength(2)
 
       const scan2 = classifyItems({
@@ -3692,11 +3692,11 @@ describe('classifyItems', () => {
             title: 'Post 2',
           }),
         ],
-        minRung: scan1.minRung,
+        identityDepth: scan1.identityDepth,
       })
 
-      expect(scan2.minRung).toBe('link')
-      expect(scan2.minRungChanged).toBe(true)
+      expect(scan2.identityDepth).toBe('link')
+      expect(scan2.identityDepthChanged).toBe(true)
       expect(scan2.updates).toHaveLength(1)
       expect(scan2.inserts).toHaveLength(1)
     })
@@ -3767,7 +3767,7 @@ describe('classifyItems', () => {
             content: 'Old C',
           }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
       }
 
       const result = classifyItems(value)
@@ -3779,8 +3779,8 @@ describe('classifyItems', () => {
       expect(new Set(targetIds).size).toBe(targetIds.length)
     })
 
-    it('should report minRungChanged only when floor is strictly weaker than input', () => {
-      const ladder: Array<LadderRung> = [
+    it('should report identityDepthChanged only when floor is strictly weaker than input', () => {
+      const depths: Array<IdentityDepth> = [
         'guid',
         'guidFragment',
         'link',
@@ -3793,15 +3793,19 @@ describe('classifyItems', () => {
         { guid: 'guid-2', link: 'https://example.com/p2', title: 'Post 2' },
       ]
 
-      for (const minRung of ladder) {
-        const result = classifyItems({ newItems: feedItems, existingItems: [], minRung })
-        const inputIndex = ladder.indexOf(minRung)
-        const outputIndex = ladder.indexOf(result.minRung)
+      for (const depth of depths) {
+        const result = classifyItems({
+          newItems: feedItems,
+          existingItems: [],
+          identityDepth: depth,
+        })
+        const inputIndex = depths.indexOf(depth)
+        const outputIndex = depths.indexOf(result.identityDepth)
 
-        if (result.minRungChanged) {
+        if (result.identityDepthChanged) {
           expect(outputIndex).toBeGreaterThan(inputIndex)
         } else {
-          expect(result.minRung).toBe(minRung)
+          expect(result.identityDepth).toBe(depth)
         }
       }
     })
@@ -3821,7 +3825,7 @@ describe('classifyItems', () => {
       }
       classifyItems(value)
       const rungEvent = events.find((event) => {
-        return event.kind === 'rung.resolved'
+        return event.kind === 'identityDepth.resolved'
       })
       const insertEvent = events.find((event) => {
         return event.kind === 'classify.insert'
@@ -3968,7 +3972,7 @@ describe('classifyItems', () => {
       expect(gatedEvent).toBeDefined()
     })
 
-    it('should emit candidates.rungFiltered when rung filter removes candidates', () => {
+    it('should emit candidates.depthFiltered when depth filter removes candidates', () => {
       const events: Array<TraceEvent> = []
       const value: ClassifyItemsInput = {
         newItems: [{ title: 'Post A' }, { title: 'Post B' }],
@@ -3976,7 +3980,7 @@ describe('classifyItems', () => {
           makeMatchable({ id: 'existing-1', title: 'Post A' }),
           makeMatchable({ id: 'existing-2', title: 'Post B' }),
         ],
-        minRung: 'title',
+        identityDepth: 'title',
         policy: {
           trace: (event) => {
             events.push(event)
@@ -3984,11 +3988,11 @@ describe('classifyItems', () => {
         },
       }
       classifyItems(value)
-      const rungFilteredEvent = events.find((event) => {
-        return event.kind === 'candidates.rungFiltered'
+      const depthFilteredEvent = events.find((event) => {
+        return event.kind === 'candidates.depthFiltered'
       })
 
-      expect(rungFilteredEvent).toBeUndefined()
+      expect(depthFilteredEvent).toBeUndefined()
     })
 
     it('should emit trace events during pre-match phase', () => {

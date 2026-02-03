@@ -1,5 +1,5 @@
-// Rungs of the identity ladder, strongest → weakest.
-export const ladderRungs = [
+// Identity depths, strongest → weakest.
+export const identityDepths = [
   'guid',
   'guidFragment',
   'link',
@@ -8,7 +8,7 @@ export const ladderRungs = [
   'title',
 ] as const
 
-export type LadderRung = (typeof ladderRungs)[number]
+export type IdentityDepth = (typeof identityDepths)[number]
 
 export type HashableItem = {
   guid?: string
@@ -131,12 +131,12 @@ export type TraceEvent =
     }
   | { kind: 'match.selected'; source: MatchSource; existingItemId: string }
   | { kind: 'match.ambiguous'; source: MatchSource; count: number }
-  | { kind: 'candidates.rungFiltered'; before: number; after: number }
+  | { kind: 'candidates.depthFiltered'; before: number; after: number }
   | { kind: 'match.none' }
   | { kind: 'classify.insert'; identifierHash: string }
   | { kind: 'classify.update'; identifierHash: string; existingItemId: string }
   | { kind: 'classify.skip'; existingItemId: string }
-  | { kind: 'rung.resolved'; minRung: LadderRung; changed: boolean }
+  | { kind: 'identityDepth.resolved'; identityDepth: IdentityDepth; changed: boolean }
 
 export type ClassifyPolicy = {
   candidateGates?: Array<CandidateGate>
@@ -147,13 +147,13 @@ export type ClassifyPolicy = {
 export type ClassifyItemsInput<TItem extends HashableItem = HashableItem> = {
   newItems: Array<TItem>
   existingItems: Array<MatchableItem>
-  minRung?: LadderRung
+  identityDepth?: IdentityDepth
   policy?: ClassifyPolicy
 }
 
 export type ClassifyItemsResult<TItem> = {
   inserts: Array<InsertAction<TItem>>
   updates: Array<UpdateAction<TItem>>
-  minRung: LadderRung
-  minRungChanged: boolean
+  identityDepth: IdentityDepth
+  identityDepthChanged: boolean
 }

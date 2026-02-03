@@ -1,6 +1,6 @@
 import { generateHash } from './helpers.js'
-import { hashMeta, identityLadder } from './meta.js'
-import type { HashableItem, ItemHashes, LadderRung } from './types.js'
+import { hashMeta, identityLevels } from './meta.js'
+import type { HashableItem, IdentityDepth, ItemHashes } from './types.js'
 
 export {
   normalizeEnclosureForHashing,
@@ -13,11 +13,11 @@ export {
   normalizeTextForHashing,
 } from './normalize.js'
 
-// Build a tagged identifier using the ladder prefix up to and including
-// the given rung. Returns undefined when no hashes exist in the prefix.
-export const composeIdentifier = (hashes: ItemHashes, minRung: LadderRung): string | undefined => {
-  const minRungIndex = identityLadder.findIndex((entry) => entry.rung === minRung)
-  const prefix = identityLadder.slice(0, minRungIndex + 1)
+// Build a tagged identifier using the level prefix up to and including
+// the given depth. Returns undefined when no hashes exist in the prefix.
+export const composeIdentifier = (hashes: ItemHashes, depth: IdentityDepth): string | undefined => {
+  const depthIndex = identityLevels.findIndex((entry) => entry.depth === depth)
+  const prefix = identityLevels.slice(0, depthIndex + 1)
 
   const hasAny = prefix.some((entry) => hashes[entry.key])
 
@@ -28,37 +28,38 @@ export const composeIdentifier = (hashes: ItemHashes, minRung: LadderRung): stri
   return prefix.map((entry) => `${entry.tag}:${hashes[entry.key] ?? ''}`).join('|')
 }
 
-// Compute the optimal min rung for a set of item hashes. Finds the strongest
-// rung where composeIdentifier produces zero collisions and full coverage
-// (every identifiable item produces an identifier). When a currentMinRung is
-// provided and is valid it is returned unchanged; if it collides or loses
-// coverage, only weaker rungs are considered (fast downgrade, never upgrades).
-export const computeMinRung = (
+// Compute the optimal identity depth for a set of item hashes. Finds the
+// strongest depth where composeIdentifier produces zero collisions and full
+// coverage (every identifiable item produces an identifier). When a
+// currentDepth is provided and is valid it is returned unchanged; if it
+// collides or loses coverage, only weaker depths are considered (fast
+// downgrade, never upgrades).
+export const resolveIdentityDepth = (
   allItemHashes: Array<ItemHashes>,
-  currentMinRung?: LadderRung,
-): LadderRung => {
-  // Count items identifiable at max rung (title). A valid rung must identify
+  currentDepth?: IdentityDepth,
+): IdentityDepth => {
+  // Count items identifiable at max depth (title). A valid depth must identify
   // the same number — otherwise some items become unidentifiable.
-  const maxRung = identityLadder[identityLadder.length - 1].rung
+  const maxDepth = identityLevels[identityLevels.length - 1].depth
   const maxIdentifiable = allItemHashes.filter(
-    (hashes) => composeIdentifier(hashes, maxRung) !== undefined,
+    (hashes) => composeIdentifier(hashes, maxDepth) !== undefined,
   ).length
 
   if (maxIdentifiable === 0) {
-    return currentMinRung ?? 'title'
+    return currentDepth ?? 'title'
   }
 
-  const startIndex = currentMinRung
-    ? identityLadder.findIndex((entry) => entry.rung === currentMinRung)
+  const startIndex = currentDepth
+    ? identityLevels.findIndex((entry) => entry.depth === currentDepth)
     : 0
 
-  for (let index = startIndex; index < identityLadder.length; index++) {
-    const rung = identityLadder[index].rung
+  for (let index = startIndex; index < identityLevels.length; index++) {
+    const depth = identityLevels[index].depth
     const keys = new Set<string>()
     let hasCollision = false
 
     for (const hashes of allItemHashes) {
-      const key = composeIdentifier(hashes, rung)
+      const key = composeIdentifier(hashes, depth)
 
       if (!key) {
         continue
@@ -72,13 +73,13 @@ export const computeMinRung = (
       keys.add(key)
     }
 
-    // Valid rung: no collisions AND full coverage of identifiable items.
+    // Valid depth: no collisions AND full coverage of identifiable items.
     if (!hasCollision && keys.size >= maxIdentifiable) {
-      return rung
+      return depth
     }
   }
 
-  // Even title collides — return weakest possible rung.
+  // Even title collides — return weakest possible depth.
   return 'title'
 }
 
