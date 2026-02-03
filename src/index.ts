@@ -3,7 +3,13 @@ export {
   buildIdentifierKeyLadder,
   computeFloorKey,
   computeItemHashes,
+  normalizeEnclosureForHashing,
+  normalizeGuidForHashing,
+  normalizeGuidFragmentForHashing,
+  normalizeHtmlForHashing,
   normalizeLinkForHashing,
+  normalizeLinkFragmentForHashing,
+  normalizeTextForHashing,
 } from './hashes.js'
 export { identityLadder } from './meta.js'
 export {
