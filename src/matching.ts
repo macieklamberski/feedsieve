@@ -8,6 +8,8 @@ import type {
   MatchableItem,
   MatchResult,
   MatchSource,
+  TierContext,
+  TierResult,
   TraceEvent,
 } from './types.js'
 
@@ -44,6 +46,159 @@ export const findCandidatesForItem = (
   )
 }
 
+// Tier matcher: GUID with enclosure/guidFragment/link disambiguation.
+const matchByGuid = (context: TierContext): TierResult => {
+  const { hashes, candidates, gated } = context
+
+  if (!hashes.guidHash) {
+    return { outcome: 'pass' }
+  }
+
+  const byGuid = gated(
+    'guid',
+    candidates.filter((candidate) => {
+      return candidate.guidHash === hashes.guidHash
+    }),
+  )
+
+  if (byGuid.length === 1) {
+    return { outcome: 'matched', result: { match: byGuid[0], identifierSource: 'guid' } }
+  }
+
+  if (byGuid.length > 1) {
+    // Try narrowing by enclosure.
+    if (hashes.enclosureHash) {
+      const byEnclosure = byGuid.filter((candidate) => {
+        return candidate.enclosureHash === hashes.enclosureHash
+      })
+
+      if (byEnclosure.length === 1) {
+        return { outcome: 'matched', result: { match: byEnclosure[0], identifierSource: 'guid' } }
+      }
+    }
+
+    // Try narrowing by guid fragment.
+    if (hashes.guidFragmentHash) {
+      const byGuidFragment = byGuid.filter((candidate) => {
+        return candidate.guidFragmentHash === hashes.guidFragmentHash
+      })
+
+      if (byGuidFragment.length === 1) {
+        return {
+          outcome: 'matched',
+          result: { match: byGuidFragment[0], identifierSource: 'guid' },
+        }
+      }
+    }
+
+    // Try narrowing by link.
+    if (hashes.linkHash) {
+      const byLink = byGuid.filter((candidate) => {
+        return candidate.linkHash === hashes.linkHash
+      })
+
+      if (byLink.length === 1) {
+        return { outcome: 'matched', result: { match: byLink[0], identifierSource: 'guid' } }
+      }
+    }
+
+    return { outcome: 'ambiguous', source: 'guid', count: byGuid.length }
+  }
+
+  return { outcome: 'pass' }
+}
+
+// Tier matcher: link with linkFragment disambiguation.
+const matchByLink = (context: TierContext): TierResult => {
+  const { hashes, candidates, gated } = context
+
+  if (!hashes.linkHash) {
+    return { outcome: 'pass' }
+  }
+
+  const byLink = gated(
+    'link',
+    candidates.filter((candidate) => {
+      return candidate.linkHash === hashes.linkHash
+    }),
+  )
+
+  if (byLink.length === 1) {
+    return { outcome: 'matched', result: { match: byLink[0], identifierSource: 'link' } }
+  }
+
+  if (byLink.length > 1) {
+    if (hashes.linkFragmentHash) {
+      const byFragment = byLink.filter((candidate) => {
+        return candidate.linkFragmentHash === hashes.linkFragmentHash
+      })
+
+      if (byFragment.length === 1) {
+        return { outcome: 'matched', result: { match: byFragment[0], identifierSource: 'link' } }
+      }
+    }
+
+    return { outcome: 'ambiguous', source: 'link', count: byLink.length }
+  }
+
+  return { outcome: 'pass' }
+}
+
+// Tier matcher: enclosure (no disambiguation).
+const matchByEnclosure = (context: TierContext): TierResult => {
+  const { hashes, candidates, gated } = context
+
+  if (!hashes.enclosureHash) {
+    return { outcome: 'pass' }
+  }
+
+  const byEnclosure = gated(
+    'enclosure',
+    candidates.filter((candidate) => {
+      return candidate.enclosureHash === hashes.enclosureHash
+    }),
+  )
+
+  if (byEnclosure.length === 1) {
+    return {
+      outcome: 'matched',
+      result: { match: byEnclosure[0], identifierSource: 'enclosure' },
+    }
+  }
+
+  if (byEnclosure.length > 1) {
+    return { outcome: 'ambiguous', source: 'enclosure', count: byEnclosure.length }
+  }
+
+  return { outcome: 'pass' }
+}
+
+// Tier matcher: title (no disambiguation, no hasStrongHash guard — that stays in selectMatch).
+const matchByTitle = (context: TierContext): TierResult => {
+  const { hashes, candidates, gated } = context
+
+  if (!hashes.titleHash) {
+    return { outcome: 'pass' }
+  }
+
+  const byTitle = gated(
+    'title',
+    candidates.filter((candidate) => {
+      return candidate.titleHash === hashes.titleHash
+    }),
+  )
+
+  if (byTitle.length === 1) {
+    return { outcome: 'matched', result: { match: byTitle[0], identifierSource: 'title' } }
+  }
+
+  if (byTitle.length > 1) {
+    return { outcome: 'ambiguous', source: 'title', count: byTitle.length }
+  }
+
+  return { outcome: 'pass' }
+}
+
 // Priority-based match selection with per-channel link gating.
 // High uniqueness: guid > link > enclosure > title
 // Low uniqueness:  guid > enclosure > link (if link-only) > title
@@ -66,6 +221,10 @@ export const selectMatch = ({
   const channel = { linkUniquenessRate }
 
   const gated = (source: MatchSource, filtered: Array<MatchableItem>): Array<MatchableItem> => {
+    if (filtered.length > 0) {
+      trace?.({ kind: 'candidates.found', source, count: filtered.length })
+    }
+
     return applyCandidateGates({
       candidates: filtered,
       source,
@@ -75,174 +234,80 @@ export const selectMatch = ({
       trace,
     })
   }
-  const selected = (result: MatchResult): MatchResult => {
-    trace?.({
-      kind: 'match.selected',
-      source: result.identifierSource,
-      existingItemId: result.match.id,
-    })
-    return result
-  }
-
-  const ambiguous = (source: MatchSource, count: number): undefined => {
-    trace?.({ kind: 'match.ambiguous', source, count })
-    return
-  }
 
   if (candidates.length === 0) {
     trace?.({ kind: 'match.none' })
     return
   }
 
-  // Priority 1: GUID match (always strongest — 94.9% coverage).
-  if (hashes.guidHash) {
-    const byGuid = gated(
-      'guid',
-      candidates.filter((candidate) => candidate.guidHash === hashes.guidHash),
-    )
+  const context: TierContext = { hashes, candidates, gated }
 
-    if (byGuid.length === 1) {
-      return selected({ match: byGuid[0], identifierSource: 'guid' })
+  const tryTier = (
+    tier: (context: TierContext) => TierResult,
+  ): MatchResult | undefined | 'pass' => {
+    const tierResult = tier(context)
+
+    if (tierResult.outcome === 'matched') {
+      trace?.({
+        kind: 'match.selected',
+        source: tierResult.result.identifierSource,
+        existingItemId: tierResult.result.match.id,
+      })
+      return tierResult.result
     }
 
-    // Multiple GUID matches — try narrowing by enclosure, guid fragment, link.
-    if (byGuid.length > 1) {
-      if (hashes.enclosureHash) {
-        const byEnclosure = byGuid.filter((candidate) => {
-          return candidate.enclosureHash === hashes.enclosureHash
-        })
-
-        if (byEnclosure.length === 1) {
-          return selected({ match: byEnclosure[0], identifierSource: 'guid' })
-        }
-      }
-
-      if (hashes.guidFragmentHash) {
-        const byGuidFragment = byGuid.filter((candidate) => {
-          return candidate.guidFragmentHash === hashes.guidFragmentHash
-        })
-
-        if (byGuidFragment.length === 1) {
-          return selected({ match: byGuidFragment[0], identifierSource: 'guid' })
-        }
-      }
-
-      if (hashes.linkHash) {
-        const byLink = byGuid.filter((candidate) => {
-          return candidate.linkHash === hashes.linkHash
-        })
-
-        if (byLink.length === 1) {
-          return selected({ match: byLink[0], identifierSource: 'guid' })
-        }
-      }
-
-      return ambiguous('guid', byGuid.length)
+    if (tierResult.outcome === 'ambiguous') {
+      trace?.({ kind: 'match.ambiguous', source: tierResult.source, count: tierResult.count })
+      return undefined
     }
+
+    return 'pass'
   }
 
+  // Priority 1: GUID match (always strongest).
+  const guidResult = tryTier(matchByGuid)
+
+  if (guidResult !== 'pass') {
+    return guidResult
+  }
+
+  // Channel-dependent tier ordering.
   if (linkUniquenessRate >= 0.95) {
     // High-uniqueness channel: link is reliable.
-    if (hashes.linkHash) {
-      const byLink = gated(
-        'link',
-        candidates.filter((candidate) => candidate.linkHash === hashes.linkHash),
-      )
+    const linkResult = tryTier(matchByLink)
 
-      if (byLink.length === 1) {
-        return selected({ match: byLink[0], identifierSource: 'link' })
-      }
-
-      if (byLink.length > 1) {
-        if (hashes.linkFragmentHash) {
-          const byFragment = byLink.filter((candidate) => {
-            return candidate.linkFragmentHash === hashes.linkFragmentHash
-          })
-
-          if (byFragment.length === 1) {
-            return selected({ match: byFragment[0], identifierSource: 'link' })
-          }
-        }
-
-        return ambiguous('link', byLink.length)
-      }
+    if (linkResult !== 'pass') {
+      return linkResult
     }
 
-    if (hashes.enclosureHash) {
-      const byEnclosure = gated(
-        'enclosure',
-        candidates.filter((candidate) => candidate.enclosureHash === hashes.enclosureHash),
-      )
+    const enclosureResult = tryTier(matchByEnclosure)
 
-      if (byEnclosure.length === 1) {
-        return selected({ match: byEnclosure[0], identifierSource: 'enclosure' })
-      }
-
-      if (byEnclosure.length > 1) {
-        return ambiguous('enclosure', byEnclosure.length)
-      }
+    if (enclosureResult !== 'pass') {
+      return enclosureResult
     }
   } else {
-    // Low-uniqueness channel (podcast/hub): enclosure is per-item, link is shared.
-    if (hashes.enclosureHash) {
-      const byEnclosure = gated(
-        'enclosure',
-        candidates.filter((candidate) => candidate.enclosureHash === hashes.enclosureHash),
-      )
+    // Low-uniqueness channel: enclosure first, link only if link-only item.
+    const enclosureResult = tryTier(matchByEnclosure)
 
-      if (byEnclosure.length === 1) {
-        return selected({ match: byEnclosure[0], identifierSource: 'enclosure' })
-      }
-
-      if (byEnclosure.length > 1) {
-        return ambiguous('enclosure', byEnclosure.length)
-      }
+    if (enclosureResult !== 'pass') {
+      return enclosureResult
     }
 
-    // Link-only items still get link matching even on low-uniqueness channels.
-    if (isLinkOnly(hashes) && hashes.linkHash) {
-      const byLink = gated(
-        'link',
-        candidates.filter((candidate) => candidate.linkHash === hashes.linkHash),
-      )
+    if (isLinkOnly(hashes)) {
+      const linkResult = tryTier(matchByLink)
 
-      if (byLink.length === 1) {
-        return selected({ match: byLink[0], identifierSource: 'link' })
-      }
-
-      if (byLink.length > 1) {
-        if (hashes.linkFragmentHash) {
-          const byFragment = byLink.filter((candidate) => {
-            return candidate.linkFragmentHash === hashes.linkFragmentHash
-          })
-
-          if (byFragment.length === 1) {
-            return selected({ match: byFragment[0], identifierSource: 'link' })
-          }
-        }
-
-        return ambiguous('link', byLink.length)
+      if (linkResult !== 'pass') {
+        return linkResult
       }
     }
   }
 
-  // Weak fallback: title only.
-  // Only used when item has no strong hashes — prevents title from
-  // accidentally merging items that have guid/link/enclosure but failed
-  // to match on those (e.g. changed GUID with same title).
+  // Weak fallback: title only when no strong hashes.
+  if (!hasStrongHash(hashes)) {
+    const titleResult = tryTier(matchByTitle)
 
-  if (!hasStrongHash(hashes) && hashes.titleHash) {
-    const byTitle = gated(
-      'title',
-      candidates.filter((candidate) => candidate.titleHash === hashes.titleHash),
-    )
-
-    if (byTitle.length === 1) {
-      return selected({ match: byTitle[0], identifierSource: 'title' })
-    }
-
-    if (byTitle.length > 1) {
-      return ambiguous('title', byTitle.length)
+    if (titleResult !== 'pass') {
+      return titleResult
     }
   }
 
@@ -280,3 +345,6 @@ export const computeChannelProfile = (
 
   return { linkUniquenessRate: Math.min(historicalRate, batchRate) }
 }
+
+// Exported for testing only — not part of public API.
+export const _testTierMatchers = { matchByGuid, matchByLink, matchByEnclosure, matchByTitle }

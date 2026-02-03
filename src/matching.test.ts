@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'bun:test'
 import { enclosureConflictGate } from './gates.js'
 import {
+  _testTierMatchers,
   computeBatchLinkUniqueness,
   computeChannelProfile,
   findCandidatesForItem,
   isLinkOnly,
   selectMatch,
 } from './matching.js'
-import type { ItemHashes, MatchableItem, MatchResult } from './types.js'
+import type { ItemHashes, MatchableItem, MatchResult, TierContext, TraceEvent } from './types.js'
+
+const { matchByGuid, matchByLink, matchByEnclosure, matchByTitle } = _testTierMatchers
 
 const makeItem = (overrides: Partial<MatchableItem> = {}): MatchableItem => {
   return {
@@ -698,6 +701,45 @@ describe('selectMatch', () => {
     }
     expect(selectMatch(value)).toBeUndefined()
   })
+
+  it('should emit candidates.found when candidates exist for a tier', () => {
+    const events: Array<TraceEvent> = []
+    const candidate = makeItem({ guidHash: 'guid-1' })
+    const value = {
+      hashes: { guidHash: 'guid-1' },
+      candidates: [candidate],
+      linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const foundEvent = events.find((event) => {
+      return event.kind === 'candidates.found'
+    })
+
+    expect(foundEvent).toEqual({ kind: 'candidates.found', source: 'guid', count: 1 })
+  })
+
+  it('should not emit candidates.found when no candidates match a tier', () => {
+    const events: Array<TraceEvent> = []
+    const value = {
+      hashes: { guidHash: 'guid-x' },
+      candidates: [makeItem({ guidHash: 'guid-y' })],
+      linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const foundEvents = events.filter((event) => {
+      return event.kind === 'candidates.found'
+    })
+
+    expect(foundEvents).toHaveLength(0)
+  })
 })
 
 describe('computeBatchLinkUniqueness', () => {
@@ -794,5 +836,229 @@ describe('computeChannelProfile', () => {
     const expected = { linkUniquenessRate: 1.0 }
 
     expect(computeChannelProfile(existingItems, incomingLinkHashes)).toEqual(expected)
+  })
+})
+
+const identity = (_source: string, filtered: Array<MatchableItem>): Array<MatchableItem> => {
+  return filtered
+}
+
+describe('matchByGuid', () => {
+  it('should match single guid candidate', () => {
+    const candidate = makeItem({ guidHash: 'guid-1' })
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1' },
+      candidates: [candidate],
+      gated: identity,
+    }
+
+    expect(matchByGuid(context)).toEqual({
+      outcome: 'matched',
+      result: { match: candidate, identifierSource: 'guid' },
+    })
+  })
+
+  it('should disambiguate by enclosure when multiple guid matches', () => {
+    const target = makeItem({ id: 'a', guidHash: 'guid-1', enclosureHash: 'enc-1' })
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1', enclosureHash: 'enc-1' },
+      candidates: [target, makeItem({ id: 'b', guidHash: 'guid-1', enclosureHash: 'enc-2' })],
+      gated: identity,
+    }
+
+    expect(matchByGuid(context)).toEqual({
+      outcome: 'matched',
+      result: { match: target, identifierSource: 'guid' },
+    })
+  })
+
+  it('should disambiguate by guid fragment when enclosure fails', () => {
+    const target = makeItem({ id: 'a', guidHash: 'guid-1', guidFragmentHash: 'gf-1' })
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1', guidFragmentHash: 'gf-1' },
+      candidates: [target, makeItem({ id: 'b', guidHash: 'guid-1', guidFragmentHash: 'gf-2' })],
+      gated: identity,
+    }
+
+    expect(matchByGuid(context)).toEqual({
+      outcome: 'matched',
+      result: { match: target, identifierSource: 'guid' },
+    })
+  })
+
+  it('should disambiguate by link when guid fragment fails', () => {
+    const target = makeItem({ id: 'a', guidHash: 'guid-1', linkHash: 'link-1' })
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1', linkHash: 'link-1' },
+      candidates: [target, makeItem({ id: 'b', guidHash: 'guid-1', linkHash: 'link-2' })],
+      gated: identity,
+    }
+
+    expect(matchByGuid(context)).toEqual({
+      outcome: 'matched',
+      result: { match: target, identifierSource: 'guid' },
+    })
+  })
+
+  it('should return ambiguous when all disambiguation fails', () => {
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1' },
+      candidates: [
+        makeItem({ id: 'a', guidHash: 'guid-1' }),
+        makeItem({ id: 'b', guidHash: 'guid-1' }),
+      ],
+      gated: identity,
+    }
+
+    expect(matchByGuid(context)).toEqual({ outcome: 'ambiguous', source: 'guid', count: 2 })
+  })
+
+  it('should pass when no guidHash', () => {
+    const context: TierContext = {
+      hashes: { linkHash: 'link-1' },
+      candidates: [makeItem({ guidHash: 'guid-1' })],
+      gated: identity,
+    }
+
+    expect(matchByGuid(context)).toEqual({ outcome: 'pass' })
+  })
+})
+
+describe('matchByLink', () => {
+  it('should match single link candidate', () => {
+    const candidate = makeItem({ linkHash: 'link-1' })
+    const context: TierContext = {
+      hashes: { linkHash: 'link-1' },
+      candidates: [candidate],
+      gated: identity,
+    }
+
+    expect(matchByLink(context)).toEqual({
+      outcome: 'matched',
+      result: { match: candidate, identifierSource: 'link' },
+    })
+  })
+
+  it('should disambiguate by link fragment when multiple matches', () => {
+    const target = makeItem({ id: 'a', linkHash: 'link-1', linkFragmentHash: 'frag-1' })
+    const context: TierContext = {
+      hashes: { linkHash: 'link-1', linkFragmentHash: 'frag-1' },
+      candidates: [target, makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-2' })],
+      gated: identity,
+    }
+
+    expect(matchByLink(context)).toEqual({
+      outcome: 'matched',
+      result: { match: target, identifierSource: 'link' },
+    })
+  })
+
+  it('should return ambiguous when fragment fails', () => {
+    const context: TierContext = {
+      hashes: { linkHash: 'link-1', linkFragmentHash: 'frag-shared' },
+      candidates: [
+        makeItem({ id: 'a', linkHash: 'link-1', linkFragmentHash: 'frag-shared' }),
+        makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-shared' }),
+      ],
+      gated: identity,
+    }
+
+    expect(matchByLink(context)).toEqual({ outcome: 'ambiguous', source: 'link', count: 2 })
+  })
+
+  it('should pass when no linkHash', () => {
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1' },
+      candidates: [makeItem({ linkHash: 'link-1' })],
+      gated: identity,
+    }
+
+    expect(matchByLink(context)).toEqual({ outcome: 'pass' })
+  })
+})
+
+describe('matchByEnclosure', () => {
+  it('should match single enclosure candidate', () => {
+    const candidate = makeItem({ enclosureHash: 'enc-1' })
+    const context: TierContext = {
+      hashes: { enclosureHash: 'enc-1' },
+      candidates: [candidate],
+      gated: identity,
+    }
+
+    expect(matchByEnclosure(context)).toEqual({
+      outcome: 'matched',
+      result: { match: candidate, identifierSource: 'enclosure' },
+    })
+  })
+
+  it('should return ambiguous when multiple matches', () => {
+    const context: TierContext = {
+      hashes: { enclosureHash: 'enc-1' },
+      candidates: [
+        makeItem({ id: 'a', enclosureHash: 'enc-1' }),
+        makeItem({ id: 'b', enclosureHash: 'enc-1' }),
+      ],
+      gated: identity,
+    }
+
+    expect(matchByEnclosure(context)).toEqual({
+      outcome: 'ambiguous',
+      source: 'enclosure',
+      count: 2,
+    })
+  })
+
+  it('should pass when no enclosureHash', () => {
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1' },
+      candidates: [makeItem({ enclosureHash: 'enc-1' })],
+      gated: identity,
+    }
+
+    expect(matchByEnclosure(context)).toEqual({ outcome: 'pass' })
+  })
+})
+
+describe('matchByTitle', () => {
+  it('should match single title candidate', () => {
+    const candidate = makeItem({ titleHash: 'title-1' })
+    const context: TierContext = {
+      hashes: { titleHash: 'title-1' },
+      candidates: [candidate],
+      gated: identity,
+    }
+
+    expect(matchByTitle(context)).toEqual({
+      outcome: 'matched',
+      result: { match: candidate, identifierSource: 'title' },
+    })
+  })
+
+  it('should return ambiguous when multiple matches', () => {
+    const context: TierContext = {
+      hashes: { titleHash: 'title-1' },
+      candidates: [
+        makeItem({ id: 'a', titleHash: 'title-1' }),
+        makeItem({ id: 'b', titleHash: 'title-1' }),
+      ],
+      gated: identity,
+    }
+
+    expect(matchByTitle(context)).toEqual({
+      outcome: 'ambiguous',
+      source: 'title',
+      count: 2,
+    })
+  })
+
+  it('should pass when no titleHash', () => {
+    const context: TierContext = {
+      hashes: { guidHash: 'guid-1' },
+      candidates: [makeItem({ titleHash: 'title-1' })],
+      gated: identity,
+    }
+
+    expect(matchByTitle(context)).toEqual({ outcome: 'pass' })
   })
 })

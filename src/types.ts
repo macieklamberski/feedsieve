@@ -68,6 +68,17 @@ export type MatchResult = {
   identifierSource: MatchSource
 }
 
+export type TierResult =
+  | { outcome: 'matched'; result: MatchResult }
+  | { outcome: 'ambiguous'; source: MatchSource; count: number }
+  | { outcome: 'pass' }
+
+export type TierContext = {
+  hashes: ItemHashes
+  candidates: Array<MatchableItem>
+  gated: (source: MatchSource, filtered: Array<MatchableItem>) => Array<MatchableItem>
+}
+
 export type InsertAction<TItem> = {
   item: TItem
   hashes: ItemHashes
@@ -120,6 +131,7 @@ export type TraceEvent =
     }
   | { kind: 'match.selected'; source: MatchSource; existingItemId: string }
   | { kind: 'match.ambiguous'; source: MatchSource; count: number }
+  | { kind: 'candidates.rungFiltered'; before: number; after: number }
   | { kind: 'match.none' }
   | { kind: 'classify.insert'; identifierHash: string }
   | { kind: 'classify.update'; identifierHash: string; existingItemId: string }

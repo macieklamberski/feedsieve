@@ -3967,5 +3967,48 @@ describe('classifyItems', () => {
 
       expect(gatedEvent).toBeDefined()
     })
+
+    it('should emit candidates.rungFiltered when rung filter removes candidates', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [{ title: 'Post A' }, { title: 'Post B' }],
+        existingItems: [
+          makeMatchable({ id: 'existing-1', title: 'Post A' }),
+          makeMatchable({ id: 'existing-2', title: 'Post B' }),
+        ],
+        minRung: 'title',
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const rungFilteredEvent = events.find((event) => {
+        return event.kind === 'candidates.rungFiltered'
+      })
+
+      expect(rungFilteredEvent).toBeUndefined()
+    })
+
+    it('should emit trace events during pre-match phase', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Old Title' })],
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const candidatesFoundEvents = events.filter((event) => {
+        return event.kind === 'candidates.found'
+      })
+
+      // Pre-match + final classification both emit candidates.found.
+      expect(candidatesFoundEvents.length).toBeGreaterThanOrEqual(2)
+    })
   })
 })

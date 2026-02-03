@@ -64,6 +64,7 @@ export const classifyItems = <TItem extends HashableItem>(
       candidates,
       linkUniquenessRate: profile.linkUniquenessRate,
       candidateGates,
+      trace,
     })
 
     if (!result) {
@@ -134,6 +135,14 @@ export const classifyItems = <TItem extends HashableItem>(
       (candidate) =>
         composeIdentifier(toItemHashes(candidate), resolvedMinRung) === item.identifier,
     )
+
+    if (rungFilteredCandidates.length < candidates.length) {
+      trace?.({
+        kind: 'candidates.rungFiltered',
+        before: candidates.length,
+        after: rungFilteredCandidates.length,
+      })
+    }
 
     const result = selectMatch({
       hashes: item.hashes,
