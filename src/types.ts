@@ -1,5 +1,14 @@
 // Rungs of the identity ladder, strongest → weakest.
-export type LadderRung = 'guid' | 'guidFragment' | 'link' | 'linkFragment' | 'enclosure' | 'title'
+export const ladderRungs = [
+  'guid',
+  'guidFragment',
+  'link',
+  'linkFragment',
+  'enclosure',
+  'title',
+] as const
+
+export type LadderRung = (typeof ladderRungs)[number]
 
 export type HashableItem = {
   guid?: string

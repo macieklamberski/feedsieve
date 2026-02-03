@@ -29,3 +29,4 @@ export type {
   MatchableItem,
   UpdateAction,
 } from './types.js'
+export { ladderRungs } from './types.js'
