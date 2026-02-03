@@ -61,9 +61,11 @@ export type ChannelProfile = {
   linkUniquenessRate: number
 }
 
+export type MatchSource = 'guid' | 'link' | 'enclosure' | 'title'
+
 export type MatchResult = {
   match: MatchableItem
-  identifierSource: string
+  identifierSource: MatchSource
 }
 
 export type InsertAction<TItem> = {
@@ -77,13 +79,64 @@ export type UpdateAction<TItem> = {
   hashes: ItemHashes
   identifierHash: string
   existingItemId: string
-  identifierSource: string
+  identifierSource: MatchSource
+}
+
+export type CandidateGateContext = {
+  source: MatchSource
+  incoming: { hashes: ItemHashes }
+  candidate: MatchableItem
+  channel: { linkUniquenessRate: number }
+}
+
+export type CandidateGateResult = { allow: true } | { allow: false; reason: string }
+
+export type CandidateGate = {
+  name: string
+  appliesTo: Array<MatchSource> | 'all'
+  decide: (context: CandidateGateContext) => CandidateGateResult
+}
+
+export type UpdateGateContext = {
+  existing: MatchableItem
+  incomingHashes: ItemHashes
+  identifierSource: MatchSource
+}
+
+export type UpdateGate = {
+  name: string
+  shouldEmit: (context: UpdateGateContext) => boolean
+}
+
+export type TraceEvent =
+  | { kind: 'candidates.found'; source: MatchSource; count: number }
+  | {
+      kind: 'candidates.gated'
+      source: MatchSource
+      gateName: string
+      reason: string
+      before: number
+      after: number
+    }
+  | { kind: 'match.selected'; source: MatchSource; existingItemId: string }
+  | { kind: 'match.ambiguous'; source: MatchSource; count: number }
+  | { kind: 'match.none' }
+  | { kind: 'classify.insert'; identifierHash: string }
+  | { kind: 'classify.update'; identifierHash: string; existingItemId: string }
+  | { kind: 'classify.skip'; existingItemId: string }
+  | { kind: 'rung.resolved'; minRung: LadderRung; changed: boolean }
+
+export type ClassifyPolicy = {
+  candidateGates?: Array<CandidateGate>
+  updateGates?: Array<UpdateGate>
+  trace?: (event: TraceEvent) => void
 }
 
 export type ClassifyItemsInput<TItem extends HashableItem = HashableItem> = {
   newItems: Array<TItem>
   existingItems: Array<MatchableItem>
   minRung?: LadderRung
+  policy?: ClassifyPolicy
 }
 
 export type ClassifyItemsResult<TItem> = {

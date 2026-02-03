@@ -1,6 +1,15 @@
+import { applyCandidateGates } from './gates.js'
 import { isDefined } from './helpers.js'
 import { hashMeta, hasStrongHash } from './meta.js'
-import type { ChannelProfile, ItemHashes, MatchableItem, MatchResult } from './types.js'
+import type {
+  CandidateGate,
+  ChannelProfile,
+  ItemHashes,
+  MatchableItem,
+  MatchResult,
+  MatchSource,
+  TraceEvent,
+} from './types.js'
 
 // Detect meaningful content changes between existing and incoming item.
 // Compares all isContent hashes (title, summary, content, enclosure).
@@ -17,19 +26,6 @@ export const hasItemChanged = (existing: MatchableItem, incomingHashes: ItemHash
 // even on low-uniqueness channels.
 export const isLinkOnly = (hashes: ItemHashes): boolean => {
   return !!hashes.linkHash && !hashes.guidHash && !hashes.enclosureHash
-}
-
-// Both sides have an enclosureHash and they differ — different items
-// sharing a URL (e.g. podcast episodes on a show page).
-export const hasEnclosureConflict = (
-  candidateEnclosureHash: string | null | undefined,
-  incomingEnclosureHash: string | undefined,
-): boolean => {
-  return (
-    !!candidateEnclosureHash &&
-    !!incomingEnclosureHash &&
-    candidateEnclosureHash !== incomingEnclosureHash
-  )
 }
 
 // In-memory filter: returns all existing items where any matchable hash matches.
@@ -67,25 +63,56 @@ export const selectMatch = ({
   hashes,
   candidates,
   linkUniquenessRate,
+  candidateGates,
+  trace,
 }: {
   hashes: ItemHashes
   candidates: Array<MatchableItem>
   linkUniquenessRate: number
+  candidateGates: Array<CandidateGate>
+  trace?: (event: TraceEvent) => void
 }): MatchResult | undefined => {
+  const incoming = { hashes }
+  const channel = { linkUniquenessRate }
+
+  const gated = (source: MatchSource, filtered: Array<MatchableItem>): Array<MatchableItem> => {
+    return applyCandidateGates({
+      candidates: filtered,
+      source,
+      gates: candidateGates,
+      incoming,
+      channel,
+      trace,
+    })
+  }
+  const selected = (result: MatchResult): MatchResult => {
+    trace?.({
+      kind: 'match.selected',
+      source: result.identifierSource,
+      existingItemId: result.match.id,
+    })
+    return result
+  }
+
+  const ambiguous = (source: MatchSource, count: number): undefined => {
+    trace?.({ kind: 'match.ambiguous', source, count })
+    return
+  }
+
   if (candidates.length === 0) {
+    trace?.({ kind: 'match.none' })
     return
   }
 
   // Priority 1: GUID match (always strongest — 94.9% coverage).
-  // Enclosure conflict check prevents merging items that share a GUID but
-  // have different enclosures (e.g. regenerated GUIDs across episodes).
   if (hashes.guidHash) {
-    const byGuid = candidates
-      .filter((candidate) => candidate.guidHash === hashes.guidHash)
-      .filter((candidate) => !hasEnclosureConflict(candidate.enclosureHash, hashes.enclosureHash))
+    const byGuid = gated(
+      'guid',
+      candidates.filter((candidate) => candidate.guidHash === hashes.guidHash),
+    )
 
     if (byGuid.length === 1) {
-      return { match: byGuid[0], identifierSource: 'guid' }
+      return selected({ match: byGuid[0], identifierSource: 'guid' })
     }
 
     // Multiple GUID matches — try narrowing by enclosure, guid fragment, link.
@@ -96,7 +123,7 @@ export const selectMatch = ({
         })
 
         if (byEnclosure.length === 1) {
-          return { match: byEnclosure[0], identifierSource: 'guid' }
+          return selected({ match: byEnclosure[0], identifierSource: 'guid' })
         }
       }
 
@@ -106,7 +133,7 @@ export const selectMatch = ({
         })
 
         if (byGuidFragment.length === 1) {
-          return { match: byGuidFragment[0], identifierSource: 'guid' }
+          return selected({ match: byGuidFragment[0], identifierSource: 'guid' })
         }
       }
 
@@ -116,23 +143,24 @@ export const selectMatch = ({
         })
 
         if (byLink.length === 1) {
-          return { match: byLink[0], identifierSource: 'guid' }
+          return selected({ match: byLink[0], identifierSource: 'guid' })
         }
       }
 
-      return
+      return ambiguous('guid', byGuid.length)
     }
   }
 
   if (linkUniquenessRate >= 0.95) {
     // High-uniqueness channel: link is reliable.
     if (hashes.linkHash) {
-      const byLink = candidates
-        .filter((candidate) => candidate.linkHash === hashes.linkHash)
-        .filter((candidate) => !hasEnclosureConflict(candidate.enclosureHash, hashes.enclosureHash))
+      const byLink = gated(
+        'link',
+        candidates.filter((candidate) => candidate.linkHash === hashes.linkHash),
+      )
 
       if (byLink.length === 1) {
-        return { match: byLink[0], identifierSource: 'link' }
+        return selected({ match: byLink[0], identifierSource: 'link' })
       }
 
       if (byLink.length > 1) {
@@ -142,51 +170,54 @@ export const selectMatch = ({
           })
 
           if (byFragment.length === 1) {
-            return { match: byFragment[0], identifierSource: 'link' }
+            return selected({ match: byFragment[0], identifierSource: 'link' })
           }
         }
 
-        return
+        return ambiguous('link', byLink.length)
       }
     }
 
     if (hashes.enclosureHash) {
-      const byEnclosure = candidates.filter((candidate) => {
-        return candidate.enclosureHash === hashes.enclosureHash
-      })
+      const byEnclosure = gated(
+        'enclosure',
+        candidates.filter((candidate) => candidate.enclosureHash === hashes.enclosureHash),
+      )
 
       if (byEnclosure.length === 1) {
-        return { match: byEnclosure[0], identifierSource: 'enclosure' }
+        return selected({ match: byEnclosure[0], identifierSource: 'enclosure' })
       }
 
       if (byEnclosure.length > 1) {
-        return
+        return ambiguous('enclosure', byEnclosure.length)
       }
     }
   } else {
     // Low-uniqueness channel (podcast/hub): enclosure is per-item, link is shared.
     if (hashes.enclosureHash) {
-      const byEnclosure = candidates.filter((candidate) => {
-        return candidate.enclosureHash === hashes.enclosureHash
-      })
+      const byEnclosure = gated(
+        'enclosure',
+        candidates.filter((candidate) => candidate.enclosureHash === hashes.enclosureHash),
+      )
 
       if (byEnclosure.length === 1) {
-        return { match: byEnclosure[0], identifierSource: 'enclosure' }
+        return selected({ match: byEnclosure[0], identifierSource: 'enclosure' })
       }
 
       if (byEnclosure.length > 1) {
-        return
+        return ambiguous('enclosure', byEnclosure.length)
       }
     }
 
     // Link-only items still get link matching even on low-uniqueness channels.
     if (isLinkOnly(hashes) && hashes.linkHash) {
-      const byLink = candidates.filter((candidate) => {
-        return candidate.linkHash === hashes.linkHash
-      })
+      const byLink = gated(
+        'link',
+        candidates.filter((candidate) => candidate.linkHash === hashes.linkHash),
+      )
 
       if (byLink.length === 1) {
-        return { match: byLink[0], identifierSource: 'link' }
+        return selected({ match: byLink[0], identifierSource: 'link' })
       }
 
       if (byLink.length > 1) {
@@ -196,11 +227,11 @@ export const selectMatch = ({
           })
 
           if (byFragment.length === 1) {
-            return { match: byFragment[0], identifierSource: 'link' }
+            return selected({ match: byFragment[0], identifierSource: 'link' })
           }
         }
 
-        return
+        return ambiguous('link', byLink.length)
       }
     }
   }
@@ -211,19 +242,21 @@ export const selectMatch = ({
   // to match on those (e.g. changed GUID with same title).
 
   if (!hasStrongHash(hashes) && hashes.titleHash) {
-    const byTitle = candidates.filter((candidate) => {
-      return candidate.titleHash === hashes.titleHash
-    })
+    const byTitle = gated(
+      'title',
+      candidates.filter((candidate) => candidate.titleHash === hashes.titleHash),
+    )
 
     if (byTitle.length === 1) {
-      return { match: byTitle[0], identifierSource: 'title' }
+      return selected({ match: byTitle[0], identifierSource: 'title' })
     }
 
     if (byTitle.length > 1) {
-      return
+      return ambiguous('title', byTitle.length)
     }
   }
 
+  trace?.({ kind: 'match.none' })
   return
 }
 

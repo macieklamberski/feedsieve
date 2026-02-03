@@ -1,11 +1,7 @@
+import { contentChangeGate, enclosureConflictGate } from './gates.js'
 import { composeIdentifier, computeMinRung } from './hashes.js'
 import { generateHash, isDefined } from './helpers.js'
-import {
-  computeChannelProfile,
-  findCandidatesForItem,
-  hasItemChanged,
-  selectMatch,
-} from './matching.js'
+import { computeChannelProfile, findCandidatesForItem, selectMatch } from './matching.js'
 import { hashKeys } from './meta.js'
 import { computeAllHashes, deduplicateByIdentifier, filterWithIdentifier } from './pipeline.js'
 import type {
@@ -38,7 +34,11 @@ const toItemHashes = (item: MatchableItem): ItemHashes => {
 export const classifyItems = <TItem extends HashableItem>(
   input: ClassifyItemsInput<TItem>,
 ): ClassifyItemsResult<TItem> => {
-  const { newItems, existingItems, minRung: inputMinRung } = input
+  const { newItems, existingItems, minRung: inputMinRung, policy } = input
+  const trace = policy?.trace
+
+  const candidateGates = [enclosureConflictGate, ...(policy?.candidateGates ?? [])]
+  const updateGates = [contentChangeGate, ...(policy?.updateGates ?? [])]
 
   const hashedItems = computeAllHashes(newItems)
   const incomingHashes = hashedItems.map((item) => item.hashes)
@@ -63,6 +63,7 @@ export const classifyItems = <TItem extends HashableItem>(
       hashes,
       candidates,
       linkUniquenessRate: profile.linkUniquenessRate,
+      candidateGates,
     })
 
     if (!result) {
@@ -109,6 +110,7 @@ export const classifyItems = <TItem extends HashableItem>(
   // Resolve min rung: validate/downgrade if provided, compute from data otherwise.
   const resolvedMinRung = computeMinRung(rungHashes, inputMinRung)
   const minRungChanged = inputMinRung !== undefined && resolvedMinRung !== inputMinRung
+  trace?.({ kind: 'rung.resolved', minRung: resolvedMinRung, changed: minRungChanged })
 
   // Build keyed items using ladder identity at the resolved min rung.
   const keyed = hashedItems.map((item) => ({
@@ -137,6 +139,8 @@ export const classifyItems = <TItem extends HashableItem>(
       hashes: item.hashes,
       candidates: rungFilteredCandidates,
       linkUniquenessRate: profile.linkUniquenessRate,
+      candidateGates,
+      trace,
     })
 
     if (!result) {
@@ -145,10 +149,19 @@ export const classifyItems = <TItem extends HashableItem>(
         hashes: item.hashes,
         identifierHash,
       })
+      trace?.({ kind: 'classify.insert', identifierHash })
       continue
     }
 
-    if (hasItemChanged(result.match, item.hashes)) {
+    const shouldUpdate = updateGates.every((gate) => {
+      return gate.shouldEmit({
+        existing: result.match,
+        incomingHashes: item.hashes,
+        identifierSource: result.identifierSource,
+      })
+    })
+
+    if (shouldUpdate) {
       updates.push({
         item: item.item,
         hashes: item.hashes,
@@ -156,9 +169,10 @@ export const classifyItems = <TItem extends HashableItem>(
         existingItemId: result.match.id,
         identifierSource: result.identifierSource,
       })
+      trace?.({ kind: 'classify.update', identifierHash, existingItemId: result.match.id })
+    } else {
+      trace?.({ kind: 'classify.skip', existingItemId: result.match.id })
     }
-
-    // Otherwise, if matched and unchanged — omit from output.
   }
 
   return { inserts, updates, minRung: resolvedMinRung, minRungChanged }

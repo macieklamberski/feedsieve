@@ -2,11 +2,14 @@ import { describe, expect, it } from 'bun:test'
 import { classifyItems } from './classifier.js'
 import { computeItemHashes } from './hashes.js'
 import type {
+  CandidateGate,
   ClassifyItemsInput,
   ClassifyItemsResult,
   HashableItem,
   LadderRung,
   MatchableItem,
+  TraceEvent,
+  UpdateGate,
 } from './types.js'
 
 describe('classifyItems', () => {
@@ -3801,6 +3804,168 @@ describe('classifyItems', () => {
           expect(result.minRung).toBe(minRung)
         }
       }
+    })
+  })
+
+  describe('policy and trace', () => {
+    it('should emit trace events for insert classification', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Post 1' }],
+        existingItems: [],
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const rungEvent = events.find((event) => {
+        return event.kind === 'rung.resolved'
+      })
+      const insertEvent = events.find((event) => {
+        return event.kind === 'classify.insert'
+      })
+
+      expect(rungEvent).toBeDefined()
+      expect(insertEvent).toBeDefined()
+    })
+
+    it('should emit trace events for update classification', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Old Title' })],
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const updateEvent = events.find((event) => {
+        return event.kind === 'classify.update'
+      })
+
+      expect(updateEvent).toBeDefined()
+      if (updateEvent && updateEvent.kind === 'classify.update') {
+        expect(updateEvent.existingItemId).toBe('existing-1')
+      }
+    })
+
+    it('should emit trace events for skip classification', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Same Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Same Title' })],
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const skipEvent = events.find((event) => {
+        return event.kind === 'classify.skip'
+      })
+
+      expect(skipEvent).toBeDefined()
+    })
+
+    it('should apply custom candidate gate to reject matches', () => {
+      const rejectAllGate: CandidateGate = {
+        name: 'rejectAll',
+        appliesTo: 'all',
+        decide: () => {
+          return { allow: false, reason: 'custom rejection' }
+        },
+      }
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Old Title' })],
+        policy: { candidateGates: [rejectAllGate] },
+      }
+      const result = classifyItems(value)
+
+      expect(result.inserts).toHaveLength(1)
+      expect(result.updates).toHaveLength(0)
+    })
+
+    it('should apply custom update gate to suppress updates', () => {
+      const suppressAllGate: UpdateGate = {
+        name: 'suppressAll',
+        shouldEmit: () => {
+          return false
+        },
+      }
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Old Title' })],
+        policy: { updateGates: [suppressAllGate] },
+      }
+      const result = classifyItems(value)
+
+      expect(result.inserts).toHaveLength(0)
+      expect(result.updates).toHaveLength(0)
+    })
+
+    it('should compose custom gates with built-in gates', () => {
+      const events: Array<TraceEvent> = []
+      const customGate: CandidateGate = {
+        name: 'customGate',
+        appliesTo: ['guid'],
+        decide: () => {
+          return { allow: true }
+        },
+      }
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Old Title' })],
+        policy: {
+          candidateGates: [customGate],
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      const result = classifyItems(value)
+
+      expect(result.updates).toHaveLength(1)
+      expect(result.updates[0].existingItemId).toBe('existing-1')
+    })
+
+    it('should emit candidates.gated trace when custom gate filters candidates', () => {
+      const events: Array<TraceEvent> = []
+      const rejectGuidGate: CandidateGate = {
+        name: 'rejectGuid',
+        appliesTo: ['guid'],
+        decide: () => {
+          return { allow: false, reason: 'custom block' }
+        },
+      }
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Same Title', content: 'New content' }],
+        existingItems: [
+          makeMatchable({
+            id: 'existing-1',
+            guid: 'guid-1',
+            title: 'Same Title',
+            content: 'Old content',
+          }),
+        ],
+        policy: {
+          candidateGates: [rejectGuidGate],
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const gatedEvent = events.find((event) => {
+        return event.kind === 'candidates.gated' && event.gateName === 'rejectGuid'
+      })
+
+      expect(gatedEvent).toBeDefined()
     })
   })
 })

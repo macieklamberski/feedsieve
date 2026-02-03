@@ -1,4 +1,5 @@
 export { classifyItems } from './classifier.js'
+export { contentChangeGate, enclosureConflictGate } from './gates.js'
 export {
   composeIdentifier,
   computeItemHashes,
@@ -18,8 +19,12 @@ export {
   filterWithIdentifier,
 } from './pipeline.js'
 export type {
+  CandidateGate,
+  CandidateGateContext,
+  CandidateGateResult,
   ClassifyItemsInput,
   ClassifyItemsResult as ClassificationResult,
+  ClassifyPolicy,
   HashableItem,
   HashedFeedItem,
   InsertAction,
@@ -27,6 +32,10 @@ export type {
   KeyedFeedItem,
   LadderRung,
   MatchableItem,
+  MatchSource,
+  TraceEvent,
   UpdateAction,
+  UpdateGate,
+  UpdateGateContext,
 } from './types.js'
 export { ladderRungs } from './types.js'

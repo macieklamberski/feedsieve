@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'bun:test'
+import { enclosureConflictGate } from './gates.js'
 import {
   computeBatchLinkUniqueness,
   computeChannelProfile,
   findCandidatesForItem,
-  hasEnclosureConflict,
   hasItemChanged,
   isLinkOnly,
   selectMatch,
 } from './matching.js'
-import type { ItemHashes, MatchableItem } from './types.js'
+import type { ItemHashes, MatchableItem, MatchResult } from './types.js'
 
 const makeItem = (overrides: Partial<MatchableItem> = {}): MatchableItem => {
   return {
@@ -139,32 +139,6 @@ describe('isLinkOnly', () => {
   })
 })
 
-describe('hasEnclosureConflict', () => {
-  it('should return true when both present and differ', () => {
-    expect(hasEnclosureConflict('hash-a', 'hash-b')).toBe(true)
-  })
-
-  it('should return false when both present and same', () => {
-    expect(hasEnclosureConflict('hash-a', 'hash-a')).toBe(false)
-  })
-
-  it('should return false when candidate is null', () => {
-    expect(hasEnclosureConflict(null, 'hash-b')).toBe(false)
-  })
-
-  it('should return false when candidate is undefined', () => {
-    expect(hasEnclosureConflict(undefined, 'hash-b')).toBe(false)
-  })
-
-  it('should return false when incoming is undefined', () => {
-    expect(hasEnclosureConflict('hash-a', undefined)).toBe(false)
-  })
-
-  it('should return false when both are undefined', () => {
-    expect(hasEnclosureConflict(undefined, undefined)).toBe(false)
-  })
-})
-
 describe('findCandidatesForItem', () => {
   it('should match on guidHash', () => {
     const value: ItemHashes = { guidHash: 'guid-1' }
@@ -283,6 +257,7 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1' },
       candidates: [],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
     expect(selectMatch(value)).toBeUndefined()
   })
@@ -293,8 +268,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1' },
       candidates: [candidate],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'guid',
     }
@@ -310,6 +286,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', guidHash: 'guid-1' }),
       ],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -321,8 +298,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', enclosureHash: 'enc-1' },
       candidates: [target, makeItem({ id: 'b', guidHash: 'guid-1', enclosureHash: 'enc-2' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: target, identifierSource: 'guid' }
+    const expected: MatchResult = { match: target, identifierSource: 'guid' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -333,8 +311,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', linkHash: 'link-1' },
       candidates: [target, makeItem({ id: 'b', guidHash: 'guid-1', linkHash: 'link-2' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: target, identifierSource: 'guid' }
+    const expected: MatchResult = { match: target, identifierSource: 'guid' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -345,8 +324,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', guidFragmentHash: 'gf-1' },
       candidates: [target, makeItem({ id: 'b', guidHash: 'guid-1', guidFragmentHash: 'gf-2' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: target, identifierSource: 'guid' }
+    const expected: MatchResult = { match: target, identifierSource: 'guid' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -359,6 +339,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', guidHash: 'guid-1', guidFragmentHash: 'gf-shared' }),
       ],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -372,6 +353,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', guidHash: 'guid-1', linkHash: 'link-shared' }),
       ],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -382,6 +364,7 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', enclosureHash: 'enc-new' },
       candidates: [makeItem({ guidHash: 'guid-1', enclosureHash: 'enc-old' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
     expect(selectMatch(value)).toBeUndefined()
   })
@@ -392,8 +375,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', enclosureHash: 'enc-same' },
       candidates: [candidate],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'guid',
     }
@@ -407,8 +391,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', enclosureHash: 'enc-new' },
       candidates: [candidate],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'guid',
     }
@@ -422,8 +407,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1' },
       candidates: [candidate],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'guid',
     }
@@ -437,8 +423,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1' },
       candidates: [candidate],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'link',
     }
@@ -451,6 +438,7 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', enclosureHash: 'enc-new' },
       candidates: [makeItem({ linkHash: 'link-1', enclosureHash: 'enc-old' })],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
     expect(selectMatch(value)).toBeUndefined()
   })
@@ -461,8 +449,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', enclosureHash: 'enc-same' },
       candidates: [candidate],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'link',
     }
@@ -476,8 +465,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', enclosureHash: 'enc-new' },
       candidates: [candidate],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'link',
     }
@@ -491,8 +481,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', linkFragmentHash: 'frag-1' },
       candidates: [target, makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-2' })],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: target, identifierSource: 'link' }
+    const expected: MatchResult = { match: target, identifierSource: 'link' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -505,6 +496,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-shared' }),
       ],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -518,6 +510,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-2' }),
       ],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -529,8 +522,9 @@ describe('selectMatch', () => {
       hashes: { enclosureHash: 'enc-1' },
       candidates: [candidate],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'enclosure',
     }
@@ -547,8 +541,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-shared', enclosureHash: 'enc-1' },
       candidates,
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidates[0],
       identifierSource: 'enclosure',
     }
@@ -561,6 +556,7 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', guidHash: 'guid-x' },
       candidates: [makeItem({ linkHash: 'link-1' })],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
     expect(selectMatch(value)).toBeUndefined()
   })
@@ -571,8 +567,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1' },
       candidates: [candidate],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'link',
     }
@@ -586,8 +583,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', linkFragmentHash: 'frag-1' },
       candidates: [target, makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-2' })],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: target, identifierSource: 'link' }
+    const expected: MatchResult = { match: target, identifierSource: 'link' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -600,6 +598,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', linkHash: 'link-1', linkFragmentHash: 'frag-shared' }),
       ],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -611,8 +610,9 @@ describe('selectMatch', () => {
       hashes: { titleHash: 'title-1' },
       candidates: [candidate],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: candidate,
       identifierSource: 'title',
     }
@@ -628,6 +628,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', titleHash: 'title-1' }),
       ],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
     expect(selectMatch(value)).toBeUndefined()
   })
@@ -637,6 +638,7 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-x', titleHash: 'title-1' },
       candidates: [makeItem({ titleHash: 'title-1' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -647,6 +649,7 @@ describe('selectMatch', () => {
       hashes: { summaryHash: 'sum-1' } as ItemHashes,
       candidates: [makeItem({ summaryHash: 'sum-1' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -657,6 +660,7 @@ describe('selectMatch', () => {
       hashes: { contentHash: 'cnt-1' } as ItemHashes,
       candidates: [makeItem({ contentHash: 'cnt-1' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -669,8 +673,9 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-1', linkHash: 'link-1' },
       candidates: [guidCandidate, linkCandidate],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: guidCandidate,
       identifierSource: 'guid',
     }
@@ -685,8 +690,9 @@ describe('selectMatch', () => {
       hashes: { linkHash: 'link-1', enclosureHash: 'enc-1' },
       candidates: [linkCandidate, encCandidate],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = {
+    const expected: MatchResult = {
       match: linkCandidate,
       identifierSource: 'link',
     }
@@ -704,8 +710,9 @@ describe('selectMatch', () => {
         makeItem({ id: 'c', guidHash: 'guid-1', enclosureHash: null }),
       ],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: target, identifierSource: 'guid' }
+    const expected: MatchResult = { match: target, identifierSource: 'guid' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -718,6 +725,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', enclosureHash: 'enc-1' }),
       ],
       linkUniquenessRate: 0.98,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -729,8 +737,9 @@ describe('selectMatch', () => {
       hashes: { enclosureHash: 'enc-1' },
       candidates: [candidate],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
-    const expected = { match: candidate, identifierSource: 'enclosure' }
+    const expected: MatchResult = { match: candidate, identifierSource: 'enclosure' }
 
     expect(selectMatch(value)).toEqual(expected)
   })
@@ -743,6 +752,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', enclosureHash: 'enc-1' }),
       ],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -756,6 +766,7 @@ describe('selectMatch', () => {
         makeItem({ id: 'b', linkHash: 'link-1' }),
       ],
       linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
     }
 
     expect(selectMatch(value)).toBeUndefined()
@@ -766,6 +777,7 @@ describe('selectMatch', () => {
       hashes: { guidHash: 'guid-x' },
       candidates: [makeItem({ guidHash: 'guid-y', linkHash: 'link-1' })],
       linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
     }
     expect(selectMatch(value)).toBeUndefined()
   })
