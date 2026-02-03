@@ -18,8 +18,8 @@ export {
   filterWithIdentifier,
 } from './pipeline.js'
 export type {
-  ClassificationResult,
   ClassifyItemsInput,
+  ClassifyItemsResult as ClassificationResult,
   HashableItem,
   HashedFeedItem,
   InsertAction,

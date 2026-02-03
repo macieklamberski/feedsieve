@@ -9,8 +9,8 @@ import {
 import { hashKeys } from './meta.js'
 import { computeAllHashes, deduplicateByIdentifierKey, filterWithIdentifier } from './pipeline.js'
 import type {
-  ClassificationResult,
   ClassifyItemsInput,
+  ClassifyItemsResult,
   HashableItem,
   InsertAction,
   ItemHashes,
@@ -37,7 +37,7 @@ const toItemHashes = (item: MatchableItem): ItemHashes => {
 // Uses ladder-based identity with auto-computed floor when floorKey is not provided.
 export const classifyItems = <TItem extends HashableItem>(
   input: ClassifyItemsInput<TItem>,
-): ClassificationResult<TItem> => {
+): ClassifyItemsResult<TItem> => {
   const { feedItems, existingItems, floorKey: inputFloorKey } = input
 
   const hashedItems = computeAllHashes(feedItems)

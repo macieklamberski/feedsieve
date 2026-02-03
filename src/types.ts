@@ -83,7 +83,7 @@ export type ClassifyItemsInput<TItem extends HashableItem = HashableItem> = {
   floorKey?: LadderRung
 }
 
-export type ClassificationResult<TItem> = {
+export type ClassifyItemsResult<TItem> = {
   inserts: Array<InsertAction<TItem>>
   updates: Array<UpdateAction<TItem>>
   floorKey: LadderRung
