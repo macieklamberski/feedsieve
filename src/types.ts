@@ -119,7 +119,9 @@ export type UpdateGate = {
   shouldEmit: (context: UpdateGateContext) => boolean
 }
 
-export type TraceEvent =
+export type TracePhase = 'prematch' | 'classify'
+
+export type TraceEvent = (
   | { kind: 'candidates.found'; source: MatchSource; count: number }
   | {
       kind: 'candidates.gated'
@@ -131,12 +133,19 @@ export type TraceEvent =
     }
   | { kind: 'match.selected'; source: MatchSource; existingItemId: string }
   | { kind: 'match.ambiguous'; source: MatchSource; count: number }
-  | { kind: 'candidates.depthFiltered'; before: number; after: number }
+  | {
+      kind: 'candidates.depthFiltered'
+      before: number
+      after: number
+      identityDepth: IdentityDepth
+    }
+  | { kind: 'tier.skipped'; source: MatchSource; reason: string }
   | { kind: 'match.none' }
   | { kind: 'classify.insert'; identifierHash: string }
   | { kind: 'classify.update'; identifierHash: string; existingItemId: string }
   | { kind: 'classify.skip'; existingItemId: string }
   | { kind: 'identityDepth.resolved'; identityDepth: IdentityDepth; changed: boolean }
+) & { phase?: TracePhase }
 
 export type ClassifyPolicy = {
   candidateGates?: Array<CandidateGate>

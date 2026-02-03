@@ -299,6 +299,12 @@ export const selectMatch = ({
       if (linkResult !== 'pass') {
         return linkResult
       }
+    } else if (hashes.linkHash) {
+      trace?.({
+        kind: 'tier.skipped',
+        source: 'link',
+        reason: 'Low-uniqueness channel; non-link-only item',
+      })
     }
   }
 
@@ -309,6 +315,8 @@ export const selectMatch = ({
     if (titleResult !== 'pass') {
       return titleResult
     }
+  } else if (hashes.titleHash) {
+    trace?.({ kind: 'tier.skipped', source: 'title', reason: 'Strong hash present' })
   }
 
   trace?.({ kind: 'match.none' })

@@ -11,6 +11,8 @@ import type {
   InsertAction,
   ItemHashes,
   MatchableItem,
+  TraceEvent,
+  TracePhase,
   UpdateAction,
 } from './types.js'
 
@@ -37,6 +39,19 @@ export const classifyItems = <TItem extends HashableItem>(
   const { newItems, existingItems, identityDepth: inputDepth, policy } = input
   const trace = policy?.trace
 
+  const scopedTrace = (phase: TracePhase): ((event: TraceEvent) => void) | undefined => {
+    if (!trace) {
+      return undefined
+    }
+
+    return (event) => {
+      trace({ ...event, phase })
+    }
+  }
+
+  const prematchTrace = scopedTrace('prematch')
+  const classifyTrace = scopedTrace('classify')
+
   const candidateGates = [enclosureConflictGate, ...(policy?.candidateGates ?? [])]
   const updateGates = [contentChangeGate, ...(policy?.updateGates ?? [])]
 
@@ -50,11 +65,11 @@ export const classifyItems = <TItem extends HashableItem>(
   const profile = computeChannelProfile(existingItems, incomingLinkHashes)
 
   // Pre-match: find existing items that are true updates and exclude them
-  // from the rung collision set. A match is "strong enough" when it's by
+  // from the depth collision set. A match is "strong enough" when it's by
   // guid, enclosure, or title — those are unambiguously the same item. A
-  // link match is only trusted when the max-rung identifiers agree (true
+  // link match is only trusted when the max-depth identifiers agree (true
   // duplicate); a bare link match with different titles could be hub onset
-  // and must stay in the collision set so the rung can detect it.
+  // and must stay in the collision set so the depth can detect it.
   const matchedExistingIds = new Set<string>()
 
   for (const { hashes } of hashedItems) {
@@ -64,7 +79,7 @@ export const classifyItems = <TItem extends HashableItem>(
       candidates,
       linkUniquenessRate: profile.linkUniquenessRate,
       candidateGates,
-      trace,
+      trace: prematchTrace,
     })
 
     if (!result) {
@@ -76,7 +91,7 @@ export const classifyItems = <TItem extends HashableItem>(
       continue
     }
 
-    // Link match: only exclude when max-rung identifiers agree (true duplicate).
+    // Link match: only exclude when max-depth identifiers agree (true duplicate).
     const incomingMaxKey = composeIdentifier(hashes, 'title')
     const existingMaxKey = composeIdentifier(toItemHashes(result.match), 'title')
 
@@ -111,7 +126,11 @@ export const classifyItems = <TItem extends HashableItem>(
   // Resolve identity depth: validate/downgrade if provided, compute from data otherwise.
   const resolvedDepth = resolveIdentityDepth(depthHashes, inputDepth)
   const depthChanged = inputDepth !== undefined && resolvedDepth !== inputDepth
-  trace?.({ kind: 'identityDepth.resolved', identityDepth: resolvedDepth, changed: depthChanged })
+  classifyTrace?.({
+    kind: 'identityDepth.resolved',
+    identityDepth: resolvedDepth,
+    changed: depthChanged,
+  })
 
   // Build keyed items using level identity at the resolved depth.
   const keyed = hashedItems.map((item) => ({
@@ -136,10 +155,11 @@ export const classifyItems = <TItem extends HashableItem>(
     )
 
     if (depthFilteredCandidates.length < candidates.length) {
-      trace?.({
+      classifyTrace?.({
         kind: 'candidates.depthFiltered',
         before: candidates.length,
         after: depthFilteredCandidates.length,
+        identityDepth: resolvedDepth,
       })
     }
 
@@ -148,7 +168,7 @@ export const classifyItems = <TItem extends HashableItem>(
       candidates: depthFilteredCandidates,
       linkUniquenessRate: profile.linkUniquenessRate,
       candidateGates,
-      trace,
+      trace: classifyTrace,
     })
 
     if (!result) {
@@ -157,7 +177,7 @@ export const classifyItems = <TItem extends HashableItem>(
         hashes: item.hashes,
         identifierHash,
       })
-      trace?.({ kind: 'classify.insert', identifierHash })
+      classifyTrace?.({ kind: 'classify.insert', identifierHash })
       continue
     }
 
@@ -177,9 +197,9 @@ export const classifyItems = <TItem extends HashableItem>(
         existingItemId: result.match.id,
         identifierSource: result.identifierSource,
       })
-      trace?.({ kind: 'classify.update', identifierHash, existingItemId: result.match.id })
+      classifyTrace?.({ kind: 'classify.update', identifierHash, existingItemId: result.match.id })
     } else {
-      trace?.({ kind: 'classify.skip', existingItemId: result.match.id })
+      classifyTrace?.({ kind: 'classify.skip', existingItemId: result.match.id })
     }
   }
 

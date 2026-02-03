@@ -34,6 +34,7 @@ export type {
   MatchableItem,
   MatchSource,
   TraceEvent,
+  TracePhase,
   UpdateAction,
   UpdateGate,
   UpdateGateContext,

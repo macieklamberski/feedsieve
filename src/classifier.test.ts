@@ -3995,7 +3995,7 @@ describe('classifyItems', () => {
       expect(depthFilteredEvent).toBeUndefined()
     })
 
-    it('should emit trace events during pre-match phase', () => {
+    it('should tag prematch trace events with prematch phase', () => {
       const events: Array<TraceEvent> = []
       const value: ClassifyItemsInput = {
         newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
@@ -4007,12 +4007,68 @@ describe('classifyItems', () => {
         },
       }
       classifyItems(value)
-      const candidatesFoundEvents = events.filter((event) => {
-        return event.kind === 'candidates.found'
+      const prematchEvents = events.filter((event) => {
+        return event.phase === 'prematch'
       })
 
-      // Pre-match + final classification both emit candidates.found.
-      expect(candidatesFoundEvents.length).toBeGreaterThanOrEqual(2)
+      expect(prematchEvents.length).toBeGreaterThanOrEqual(1)
+      expect(
+        prematchEvents.every(
+          (event) =>
+            event.kind === 'candidates.found' ||
+            event.kind === 'match.selected' ||
+            event.kind === 'match.none',
+        ),
+      ).toBe(true)
+    })
+
+    it('should tag classify trace events with classify phase', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [{ guid: 'guid-1', title: 'Updated Title' }],
+        existingItems: [makeMatchable({ id: 'existing-1', guid: 'guid-1', title: 'Old Title' })],
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const classifyEvents = events.filter((event) => {
+        return event.phase === 'classify'
+      })
+      const classifyKinds = new Set(classifyEvents.map((event) => event.kind))
+
+      expect(classifyEvents.length).toBeGreaterThanOrEqual(1)
+      expect(classifyKinds.has('identityDepth.resolved')).toBe(true)
+    })
+
+    it('should include identityDepth in candidates.depthFiltered event', () => {
+      const events: Array<TraceEvent> = []
+      const value: ClassifyItemsInput = {
+        newItems: [
+          { link: 'https://example.com/a', title: 'Post A' },
+          { link: 'https://example.com/b', title: 'Post B' },
+        ],
+        existingItems: [
+          makeMatchable({ id: 'existing-1', link: 'https://example.com/a', title: 'Old Title A' }),
+        ],
+        identityDepth: 'title',
+        policy: {
+          trace: (event) => {
+            events.push(event)
+          },
+        },
+      }
+      classifyItems(value)
+      const depthFilteredEvent = events.find((event) => {
+        return event.kind === 'candidates.depthFiltered'
+      })
+
+      if (depthFilteredEvent && depthFilteredEvent.kind === 'candidates.depthFiltered') {
+        expect(depthFilteredEvent.identityDepth).toBe('title')
+        expect(depthFilteredEvent.phase).toBe('classify')
+      }
     })
   })
 })

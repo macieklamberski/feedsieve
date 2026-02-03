@@ -740,6 +740,109 @@ describe('selectMatch', () => {
 
     expect(foundEvents).toHaveLength(0)
   })
+
+  it('should emit tier.skipped for title when strong hash present', () => {
+    const events: Array<TraceEvent> = []
+    const value = {
+      hashes: { guidHash: 'guid-1', titleHash: 'title-1' },
+      candidates: [makeItem({ titleHash: 'title-1' })],
+      linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const skippedEvent = events.find((event) => {
+      return event.kind === 'tier.skipped' && event.source === 'title'
+    })
+
+    expect(skippedEvent).toEqual({
+      kind: 'tier.skipped',
+      source: 'title',
+      reason: 'Strong hash present',
+    })
+  })
+
+  it('should not emit tier.skipped for title when no strong hash', () => {
+    const events: Array<TraceEvent> = []
+    const value = {
+      hashes: { titleHash: 'title-1' },
+      candidates: [makeItem({ titleHash: 'title-1' })],
+      linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const skippedEvents = events.filter((event) => {
+      return event.kind === 'tier.skipped' && event.source === 'title'
+    })
+
+    expect(skippedEvents).toHaveLength(0)
+  })
+
+  it('should emit tier.skipped for link on low-uniqueness channel when not link-only', () => {
+    const events: Array<TraceEvent> = []
+    const value = {
+      hashes: { guidHash: 'guid-1', linkHash: 'link-1' },
+      candidates: [makeItem({ linkHash: 'link-1' })],
+      linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const skippedEvent = events.find((event) => {
+      return event.kind === 'tier.skipped' && event.source === 'link'
+    })
+
+    expect(skippedEvent).toEqual({
+      kind: 'tier.skipped',
+      source: 'link',
+      reason: 'Low-uniqueness channel; non-link-only item',
+    })
+  })
+
+  it('should not emit tier.skipped for link on low-uniqueness channel when link-only', () => {
+    const events: Array<TraceEvent> = []
+    const value = {
+      hashes: { linkHash: 'link-1' },
+      candidates: [makeItem({ linkHash: 'link-1' })],
+      linkUniquenessRate: 0.3,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const skippedEvents = events.filter((event) => {
+      return event.kind === 'tier.skipped' && event.source === 'link'
+    })
+
+    expect(skippedEvents).toHaveLength(0)
+  })
+
+  it('should not emit tier.skipped for link on high-uniqueness channel', () => {
+    const events: Array<TraceEvent> = []
+    const value = {
+      hashes: { guidHash: 'guid-1', linkHash: 'link-1' },
+      candidates: [makeItem({ linkHash: 'link-1' })],
+      linkUniquenessRate: 1.0,
+      candidateGates: [enclosureConflictGate],
+      trace: (event: TraceEvent) => {
+        events.push(event)
+      },
+    }
+    selectMatch(value)
+    const skippedEvents = events.filter((event) => {
+      return event.kind === 'tier.skipped' && event.source === 'link'
+    })
+
+    expect(skippedEvents).toHaveLength(0)
+  })
 })
 
 describe('computeBatchLinkUniqueness', () => {
