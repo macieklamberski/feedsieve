@@ -144,7 +144,7 @@ export type TraceEvent = (
   | { kind: 'classify.insert'; identifierHash: string }
   | { kind: 'classify.update'; identifierHash: string; existingItemId: string }
   | { kind: 'classify.skip'; existingItemId: string }
-  | { kind: 'identityDepth.resolved'; identityDepth: IdentityDepth; changed: boolean }
+  | { kind: 'identityDepth.resolved'; identityDepth: IdentityDepth }
 ) & { phase?: TracePhase }
 
 export type ClassifyPolicy = {
@@ -164,5 +164,4 @@ export type ClassifyItemsResult<TItem> = {
   inserts: Array<InsertAction<TItem>>
   updates: Array<UpdateAction<TItem>>
   identityDepth: IdentityDepth
-  identityDepthChanged: boolean
 }

@@ -125,12 +125,7 @@ export const classifyItems = <TItem extends HashableItem>(
 
   // Resolve identity depth: validate/downgrade if provided, compute from data otherwise.
   const resolvedDepth = resolveIdentityDepth(depthHashes, inputDepth)
-  const depthChanged = inputDepth !== undefined && resolvedDepth !== inputDepth
-  classifyTrace?.({
-    kind: 'identityDepth.resolved',
-    identityDepth: resolvedDepth,
-    changed: depthChanged,
-  })
+  classifyTrace?.({ kind: 'identityDepth.resolved', identityDepth: resolvedDepth })
 
   // Build keyed items using level identity at the resolved depth.
   const keyed = hashedItems.map((item) => ({
@@ -203,5 +198,5 @@ export const classifyItems = <TItem extends HashableItem>(
     }
   }
 
-  return { inserts, updates, identityDepth: resolvedDepth, identityDepthChanged: depthChanged }
+  return { inserts, updates, identityDepth: resolvedDepth }
 }

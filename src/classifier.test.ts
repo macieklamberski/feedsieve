@@ -54,7 +54,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -88,7 +87,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -133,7 +131,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -155,7 +152,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -176,7 +172,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -206,7 +201,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -264,7 +258,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -279,7 +272,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -294,7 +286,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -323,7 +314,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -361,7 +351,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -384,7 +373,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -406,7 +394,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -429,7 +416,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -479,7 +465,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -508,7 +493,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -542,7 +526,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -574,7 +557,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -597,7 +579,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -605,7 +586,7 @@ describe('classifyItems', () => {
   })
 
   describe('floor computation', () => {
-    it('should detect identityDepthChanged when floor is downgraded', () => {
+    it('should downgrade identityDepth when collisions exist at input depth', () => {
       const feedItemA = { link: 'https://example.com/shared', title: 'Post A' }
       const feedItemB = { link: 'https://example.com/shared', title: 'Post B' }
       const value: ClassifyItemsInput = {
@@ -628,13 +609,12 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
     })
 
-    it('should not set identityDepthChanged when floor is stable', () => {
+    it('should preserve identityDepth when floor is stable', () => {
       const feedItem1 = { guid: 'guid-1', title: 'Post 1' }
       const feedItem2 = { guid: 'guid-2', title: 'Post 2' }
       const value: ClassifyItemsInput = {
@@ -657,7 +637,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -686,7 +665,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       const result = classifyItems(value)
@@ -723,7 +701,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -752,7 +729,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -780,7 +756,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -809,7 +784,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'linkFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -838,7 +812,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guidFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -875,7 +848,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -912,7 +884,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -941,7 +912,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -970,7 +940,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -986,7 +955,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1008,7 +976,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1035,7 +1002,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1055,7 +1021,6 @@ describe('classifyItems', () => {
       const identifierHashes = result.inserts.map((item) => item.identifierHash)
 
       expect(result.identityDepth).toBe('linkFragment')
-      expect(result.identityDepthChanged).toBe(true)
       expect(identifierHashes.length).toBe(3)
       expect(new Set(identifierHashes).size).toBe(3)
     })
@@ -1083,7 +1048,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1118,7 +1082,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1147,7 +1110,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1176,7 +1138,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1213,7 +1174,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1250,7 +1210,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1287,7 +1246,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'linkFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1324,7 +1282,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guidFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1350,7 +1307,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1382,7 +1338,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1422,7 +1377,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1455,7 +1409,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1483,7 +1436,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'linkFragment',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1517,7 +1469,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1553,7 +1504,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1595,7 +1545,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1624,7 +1573,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1653,7 +1601,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'linkFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1682,7 +1629,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'linkFragment',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1715,7 +1661,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1744,7 +1689,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1778,7 +1722,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1810,7 +1753,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1844,7 +1786,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1877,7 +1818,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1919,7 +1859,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1949,7 +1888,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -1984,7 +1922,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2019,7 +1956,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2053,7 +1989,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2094,7 +2029,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2127,7 +2061,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2165,7 +2098,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2212,7 +2144,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2249,7 +2180,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2278,7 +2208,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2334,7 +2263,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2396,7 +2324,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2440,7 +2367,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2496,7 +2422,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2536,7 +2461,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2573,7 +2497,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2608,7 +2531,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2642,7 +2564,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2683,7 +2604,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2737,7 +2657,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2778,7 +2697,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2823,7 +2741,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'enclosure',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2865,7 +2782,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guidFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2912,7 +2828,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'linkFragment',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2957,7 +2872,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'link',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -2992,7 +2906,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3036,7 +2949,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3065,7 +2977,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guidFragment',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3102,7 +3013,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3125,7 +3035,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'link',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3157,7 +3066,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3200,7 +3108,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'title',
-        identityDepthChanged: true,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3217,7 +3124,6 @@ describe('classifyItems', () => {
         inserts: [],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3260,7 +3166,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3288,7 +3193,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3321,7 +3225,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3357,7 +3260,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3393,7 +3295,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3422,7 +3323,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3453,7 +3353,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3484,7 +3383,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'guid',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3525,7 +3423,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'title',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3566,7 +3463,6 @@ describe('classifyItems', () => {
         ],
         updates: [],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3601,7 +3497,6 @@ describe('classifyItems', () => {
           },
         ],
         identityDepth: 'enclosure',
-        identityDepthChanged: false,
       }
 
       expect(classifyItems(value)).toEqual(expected)
@@ -3634,7 +3529,6 @@ describe('classifyItems', () => {
       })
 
       expect(scan2.identityDepth).toBe('title')
-      expect(scan2.identityDepthChanged).toBe(true)
       expect(scan2.inserts).toHaveLength(1)
       expect(scan2.updates).toHaveLength(1)
     })
@@ -3658,7 +3552,6 @@ describe('classifyItems', () => {
       })
 
       expect(scan3.identityDepth).toBe('title')
-      expect(scan3.identityDepthChanged).toBe(false)
     })
 
     it('should downgrade floor when guid is recycled in later scan', () => {
@@ -3696,7 +3589,6 @@ describe('classifyItems', () => {
       })
 
       expect(scan2.identityDepth).toBe('link')
-      expect(scan2.identityDepthChanged).toBe(true)
       expect(scan2.updates).toHaveLength(1)
       expect(scan2.inserts).toHaveLength(1)
     })
@@ -3779,7 +3671,7 @@ describe('classifyItems', () => {
       expect(new Set(targetIds).size).toBe(targetIds.length)
     })
 
-    it('should report identityDepthChanged only when floor is strictly weaker than input', () => {
+    it('should never resolve identityDepth stronger than input', () => {
       const depths: Array<IdentityDepth> = [
         'guid',
         'guidFragment',
@@ -3802,11 +3694,7 @@ describe('classifyItems', () => {
         const inputIndex = depths.indexOf(depth)
         const outputIndex = depths.indexOf(result.identityDepth)
 
-        if (result.identityDepthChanged) {
-          expect(outputIndex).toBeGreaterThan(inputIndex)
-        } else {
-          expect(result.identityDepth).toBe(depth)
-        }
+        expect(outputIndex).toBeGreaterThanOrEqual(inputIndex)
       }
     })
   })
